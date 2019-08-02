@@ -1,0 +1,2934 @@
+---
+title: "Smart Hand Controller Data Analysis"
+author:  
+  - Amir Baghdadi^[Project neuroArm, Department of Clinical Neurosciences, University of Calgary. ]
+  - Hamidreza Hoshyarmanesh^[Project neuroArm, Department of Clinical Neurosciences, University of Calgary. ]
+  - Madeleine de Lotbinière-Bassett^[Project neuroArm, Department of Clinical Neurosciences, University of Calgary. ]
+  - Sanju Lama^[Project neuroArm, Department of Clinical Neurosciences, University of Calgary. ]
+  - Garnette R. Sutherland^[Project neuroArm, Department of Clinical Neurosciences, University of Calgary. Corresponding author. [garnette@ucalgary.ca](mailto:garnette@ucalgary.ca).]
+
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    df_print: paged
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+In this document, we attempt to analyze the objective and subjective features aquired from three hand controllers for performance assessment and design modification. The studied hand controllers were: microsurgery-specific Excalibur3DS-I ("**Excalibur**"), and two general purpose haptic devices: HD2 ("**Premium**") and sigma.7 ("**Sigma7**"). A group of 30 participants selected among the experienced surgeons as well as the residents and fellows in the Department of Clinical Neurosciences at the University of Calgary were recruited to perform a peg-in-hole task consisting of cotton strip micromanipulation in a limited workspace, aimed to reflect the maneuvers performed during microsurgery.    
+
+The reader can **show** any code chunk by clicking on the *code* button. We chose to make the default for the code hidden since we: (a) wanted to improve the readability of this document; and (b) assumed that the readers will not be interested in reading every code chunk.
+
+****
+
+# Managing and Visualizing Data 
+
+The snippet below documents the list of **R** libraries that were used in this research. For convenience, we used the pacman package since it allows for installing/loading the needed libraries in one step.
+
+```{r echo=TRUE, error=FALSE, warning=FALSE, cache=TRUE, load_libraries, message=FALSE, cache=FALSE}
+rm(list = ls()) # clear global environment
+graphics.off() # close all graphics
+library(pacman) # needs to be installed first
+p_load(
+  R.matlab,
+  plotly,
+  extrafont,
+  grDevices,
+  gridExtra,
+  stats,
+  qlcMatrix,
+  dplyr,
+  stringr,
+  tidyverse,
+  utils,
+  reshape2,
+  ggplot2,
+  devtools,
+  knitr,
+  kableExtra,
+  data.table,
+  RColorBrewer,
+  readxl,
+  abind,
+  fmsb,
+  chron,
+  jmv,
+  factoextra,
+  imputeTS,
+  ISLR,
+  yarrr,
+  caret,
+  e1071,
+  psych,
+  nnet,
+  lmtest,
+  pscl
+  )
+
+```
+
+In the snippet below, we extract the ".mat" files from the hand controllers MATLAB software.
+
+```{r load_data, eval=FALSE, cache=TRUE, include=FALSE}
+
+subj_data_survery_trans <-
+  read_excel(
+    paste(
+      "~/Desktop/Canada/neuroArm/",
+      "neuroArmPLUS/Smart Handcontroller/Part 2/Part 2/",
+      "data/HC Selected Data.xlsx",
+      sep = ""
+    ),
+    sheet = "Survey"
+  )
+subj_data_survey_main <-
+  read_excel(
+    paste(
+      "~/Desktop/Canada/neuroArm/",
+      "neuroArmPLUS/Smart Handcontroller/Part 2/Part 2/",
+      "data/HC Selected Data.xlsx",
+      sep = ""
+    ),
+    sheet = "Trained"
+  )
+
+
+num_subjects <- seq(1, 30)
+name_subjects <-
+  c(
+    "Andrew",
+    "Olina",
+    "Rebecca",
+    "Mack",
+    "DrFrancis",
+    "Dan",
+    "Jennifer",
+    "Murray",
+    "Taryn",
+    "DrWong",
+    "DrPhillips",
+    "MikesJames",
+    "DrCasha",
+    "JenRedwood",
+    "DrKirkpatrick",
+    "DavidBen",
+    "DrBradJacobs",
+    "DrJamesDimou",
+    "Sid",
+    "Saud",
+    "MikeYang",
+    "SashaRogers",
+    "PaulMcBeth",
+    "Riaz",
+    "AlexMeldrum",
+    "NaomiKasteel",
+    "MattEagles",
+    "KY_Choi",
+    "Jayd",
+    "MikeAvery"
+  )
+name_device <- c("Excalibur", "Premium_Right1", "Sigma7Right")
+abbrv_device <- c("E", "P", "S")
+
+# reading hand controller data
+for (i in 1:3) {
+  for (j in 1:length(num_subjects)) {
+    # Reading the .mat files
+    raw_data <-
+      t(readMat(
+        paste0(
+          "/Volumes/My Passport/Experiments_July2018/",
+          abbrv_device[i],
+          "/",
+          name_subjects[j],
+          "_",
+          name_device[i],
+          ".mat"
+        )
+      )[[1]])
+    
+    # Compute the number of rows in each matrix
+    num_rows <- dim(raw_data)[1] # num of rows
+    
+    # Assigning the feature values from the raw_data and creating one data frame per subject
+    assign(
+      paste0("subject", j, "_features_", abbrv_device[i]),
+      data.frame(
+        time_in_sec = raw_data[, 1],
+        position_x = raw_data[, 2],
+        position_y = raw_data[, 3],
+        position_z = raw_data[, 4],
+        gimbangle_x = raw_data[, 5],
+        gimbangle_y = raw_data[, 6],
+        gimbangle_z = raw_data[, 7],
+        force_x = raw_data[, 8],
+        force_y = raw_data[, 9],
+        force_z = raw_data[, 10],
+        armangle_x = raw_data[, 14],
+        armangle_y = raw_data[, 15],
+        armangle_z = raw_data[, 16],
+        pinch = raw_data[, 17],
+        pedal_r = raw_data[, 18],
+        clutch_num = raw_data[, 19],
+        experim_num = raw_data[, 20]
+      )
+    )
+  }
+}
+
+# reading Kuka data
+for (i in 1:3) {
+  for (j in 1:length(num_subjects)) {
+    # Reading the .mat files
+    raw_data <-
+      t(readMat(
+        paste0(
+          "/Volumes/My Passport/Experiments_July2018/",
+          abbrv_device[i],
+          "/",
+          name_subjects[j],
+          "_Kuka.mat"
+        )
+      )[[1]])
+    
+    # Compute the number of rows in each matrix
+    num_rows <- dim(raw_data)[1] # num of rows
+    
+    # Assigning the feature values from the raw_data and creating one data frame per subject
+    assign(
+      paste0("Kuka_subject", j, "_features_", abbrv_device[i]),
+      data.frame(
+        time_in_sec = raw_data[, 1],
+        position_x = raw_data[, 2],
+        position_y = raw_data[, 3],
+        position_z = raw_data[, 4],
+        force_x = raw_data[, 8],
+        force_y = raw_data[, 9],
+        force_z = raw_data[, 10],
+        experim_num = raw_data[, 23]
+      )
+    )
+  }
+}
+
+
+# Saving a list of raw data in one file
+save(
+  subj_data_survery_trans,
+  subj_data_survey_main,
+  file = paste(
+    "~/Desktop/Canada/neuroArm/neuroArmPLUS",
+    "/Smart Handcontroller/Part 2/data/DataReadSurvey.RData",
+    sep = ""
+  )
+)
+
+save(
+  subject1_features_E,
+  subject2_features_E,
+  subject3_features_E,
+  subject4_features_E,
+  subject5_features_E,
+  subject6_features_E,
+  subject7_features_E,
+  subject8_features_E,
+  subject9_features_E,
+  subject10_features_E,
+  subject11_features_E,
+  subject12_features_E,
+  subject13_features_E,
+  subject14_features_E,
+  subject15_features_E,
+  subject16_features_E,
+  subject17_features_E,
+  subject18_features_E,
+  subject19_features_E,
+  subject20_features_E,
+  subject21_features_E,
+  subject22_features_E,
+  subject23_features_E,
+  subject24_features_E,
+  subject25_features_E,
+  subject26_features_E,
+  subject27_features_E,
+  subject28_features_E,
+  subject29_features_E,
+  subject30_features_E,
+  subject1_features_P,
+  subject2_features_P,
+  subject3_features_P,
+  subject4_features_P,
+  subject5_features_P,
+  subject6_features_P,
+  subject7_features_P,
+  subject8_features_P,
+  subject9_features_P,
+  subject10_features_P,
+  subject11_features_P,
+  subject12_features_P,
+  subject13_features_P,
+  subject14_features_P,
+  subject15_features_P,
+  subject16_features_P,
+  subject17_features_P,
+  subject18_features_P,
+  subject19_features_P,
+  subject20_features_P,
+  subject21_features_P,
+  subject22_features_P,
+  subject23_features_P,
+  subject24_features_P,
+  subject25_features_P,
+  subject26_features_P,
+  subject27_features_P,
+  subject28_features_P,
+  subject29_features_P,
+  subject30_features_P,
+  subject1_features_S,
+  subject2_features_S,
+  subject3_features_S,
+  subject4_features_S,
+  subject5_features_S,
+  subject6_features_S,
+  subject7_features_S,
+  subject8_features_S,
+  subject9_features_S,
+  subject10_features_S,
+  subject11_features_S,
+  subject12_features_S,
+  subject13_features_S,
+  subject14_features_S,
+  subject15_features_S,
+  subject16_features_S,
+  subject17_features_S,
+  subject18_features_S,
+  subject19_features_S,
+  subject20_features_S,
+  subject21_features_S,
+  subject22_features_S,
+  subject23_features_S,
+  subject24_features_S,
+  subject25_features_S,
+  subject26_features_S,
+  subject27_features_S,
+  subject28_features_S,
+  subject29_features_S,
+  subject30_features_S,
+  file = paste(
+    "~/Desktop/Canada/neuroArm/neuroArmPLUS",
+    "/Smart Handcontroller/Part 2/data/DataReadSensor.RData",
+    sep = ""
+  )
+)
+
+save(
+  Kuka_subject1_features_E,
+  Kuka_subject2_features_E,
+  Kuka_subject3_features_E,
+  Kuka_subject4_features_E,
+  Kuka_subject5_features_E,
+  Kuka_subject6_features_E,
+  Kuka_subject7_features_E,
+  Kuka_subject8_features_E,
+  Kuka_subject9_features_E,
+  Kuka_subject10_features_E,
+  Kuka_subject11_features_E,
+  Kuka_subject12_features_E,
+  Kuka_subject13_features_E,
+  Kuka_subject14_features_E,
+  Kuka_subject15_features_E,
+  Kuka_subject16_features_E,
+  Kuka_subject17_features_E,
+  Kuka_subject18_features_E,
+  Kuka_subject19_features_E,
+  Kuka_subject20_features_E,
+  Kuka_subject21_features_E,
+  Kuka_subject22_features_E,
+  Kuka_subject23_features_E,
+  Kuka_subject24_features_E,
+  Kuka_subject25_features_E,
+  Kuka_subject26_features_E,
+  Kuka_subject27_features_E,
+  Kuka_subject28_features_E,
+  Kuka_subject29_features_E,
+  Kuka_subject30_features_E,
+  Kuka_subject1_features_P,
+  Kuka_subject2_features_P,
+  Kuka_subject3_features_P,
+  Kuka_subject4_features_P,
+  Kuka_subject5_features_P,
+  Kuka_subject6_features_P,
+  Kuka_subject7_features_P,
+  Kuka_subject8_features_P,
+  Kuka_subject9_features_P,
+  Kuka_subject10_features_P,
+  Kuka_subject11_features_P,
+  Kuka_subject12_features_P,
+  Kuka_subject13_features_P,
+  Kuka_subject14_features_P,
+  Kuka_subject15_features_P,
+  Kuka_subject16_features_P,
+  Kuka_subject17_features_P,
+  Kuka_subject18_features_P,
+  Kuka_subject19_features_P,
+  Kuka_subject20_features_P,
+  Kuka_subject21_features_P,
+  Kuka_subject22_features_P,
+  Kuka_subject23_features_P,
+  Kuka_subject24_features_P,
+  Kuka_subject25_features_P,
+  Kuka_subject26_features_P,
+  Kuka_subject27_features_P,
+  Kuka_subject28_features_P,
+  Kuka_subject29_features_P,
+  Kuka_subject30_features_P,
+  Kuka_subject1_features_S,
+  Kuka_subject2_features_S,
+  Kuka_subject3_features_S,
+  Kuka_subject4_features_S,
+  Kuka_subject5_features_S,
+  Kuka_subject6_features_S,
+  Kuka_subject7_features_S,
+  Kuka_subject8_features_S,
+  Kuka_subject9_features_S,
+  Kuka_subject10_features_S,
+  Kuka_subject11_features_S,
+  Kuka_subject12_features_S,
+  Kuka_subject13_features_S,
+  Kuka_subject14_features_S,
+  Kuka_subject15_features_S,
+  Kuka_subject16_features_S,
+  Kuka_subject17_features_S,
+  Kuka_subject18_features_S,
+  Kuka_subject19_features_S,
+  Kuka_subject20_features_S,
+  Kuka_subject21_features_S,
+  Kuka_subject22_features_S,
+  Kuka_subject23_features_S,
+  Kuka_subject24_features_S,
+  Kuka_subject25_features_S,
+  Kuka_subject26_features_S,
+  Kuka_subject27_features_S,
+  Kuka_subject28_features_S,
+  Kuka_subject29_features_S,
+  Kuka_subject30_features_S,
+  file = paste(
+    "~/Desktop/Canada/neuroArm/neuroArmPLUS",
+    "/Smart Handcontroller/Part 2/data/DataReadSensorKuka.RData",
+    sep = ""
+  )
+)
+
+```
+
+****
+
+## Extracting and Managing the Underlined Survey Features {.tabset .tabset-fade}
+
+In this section, the data from survey was extracted and put into **R _dataframe_**. The data include status of being trained (*Training Status*), years of experience as a surgeon (*Year Level Category*) expressed in four levels of 1-3, 4-6, 7-9, and 10 years, age range (*Age Range Category*) expressed in four levels of 18-30, 31-45, 46-60, and >61 years old. Binary level data on prior experience with hand controller (*Prior Experience*) and having the experience of playing video games (*Video Game Experience*) were also included in the survey questions. 
+
+The questionnaire consisted of 21 questions labeled as A1-A21 with A1-A4 having multiple choice answers and A5-A21 having a selection scale of 0-100 with the increments of 10. The actual questions are as follows:
+
+A1) How is the hand controller's workspace for surgery?
+
+A2) How was the physical size of the hand controller?
+
+A3) How was the hand controller's weight?
+
+A4) How many times were you unable to orient the tool in your desired direction?
+
+A5) How was the smoothness of motion for the hand controller?
+
+A6) How was the smoothness of positioning in 3D space?
+
+A7) How was the smoothness of orienting in 3D space?
+
+A8) How comfortable was the oriention of the hand controller?
+
+A9) How confidently could move the hand controller?
+
+A10) How realistic was the force feedback?
+
+A11) How many unexpected forces did you feel from the hand cotroller not matching its position in the screen?
+
+A12) How helpful was the force feedback in accomplishing the task?
+
+A13) Rate the difficulty of positioning the tool tip using the hand controller.
+
+A14) How was the agreement between the tool motion on the screen and your intended movement?  
+
+A15) Rate the difficulty in orienting the tool to pick up the pegs.
+
+A16) Rate the difficulty of roll movement.
+
+A17) Rate the difficulty of pitch movement.
+
+A18) Rate the difficulty of yaw movement.
+
+A19) Rate your fatigue level in the upper limb after operating the hand controller.
+
+A20) Rate your fatigue level in the wrist after operating the hand controller.  
+
+A21) Rate the appearance of the hand controller.  
+
+In order to have a consistent visualization, the results of questionnaire were normalized between 0-1 with numbers closer to one showing a better performance. Below are the visualized summary results for the data averaged across the participants and the summary of demographical and experience information. The survey summary results showed that 25 participants selected Excalibur as the superior hand controller, while 2 participants selected Premium and 3 selected Sigma7. The visual results of the participants demographic and experience data presented in the following spider chart show that the participants selecting Excalibur tend to have higher experience and age levels. 
+
+```{r extract_subject_metrics, eval=TRUE, fig.align='center', fig.height=12, fig.width=20, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%", results="hide"}
+# reading data from the saved file
+load(
+  paste(
+    "~/Desktop/Canada/neuroArm/neuroArmPLUS",
+    "/Smart Handcontroller/Part 2/data/DataReadSurvey.RData",
+    sep = ""
+  )
+)
+
+# converting date format completion time to double
+tm_E <- c()
+tm_P <- c()
+tm_S <- c()
+for (j in 1:30) {
+  tm_E <- abind(tm_E,
+                60 * 24 * as.numeric(times(strsplit(
+                  toString(data.frame(subj_data_survey_main[5 * j, 23])[[1]]), " "
+                )[[1]][2])))
+  tm_P <- abind(tm_P,
+                60 * 24 * as.numeric(times(strsplit(
+                  toString(data.frame(subj_data_survey_main[5 * j, 18])[[1]]), " "
+                )[[1]][2])))
+  tm_S <- abind(tm_S,
+                60 * 24 * as.numeric(times(strsplit(
+                  toString(data.frame(subj_data_survey_main[5 * j, 13])[[1]]), " "
+                )[[1]][2])))
+}
+
+
+tm_brk_E <-
+  setNames(
+    data.frame(matrix(
+      data = NA, nrow = 30, ncol = 4
+    )),
+    c(
+      "completion.time.brk.1",
+      "completion.time.brk.2",
+      "completion.time.brk.3",
+      "completion.time.brk.4"
+    )
+  )
+tm_brk_P <-
+  setNames(
+    data.frame(matrix(
+      data = NA, nrow = 30, ncol = 4
+    )),
+    c(
+      "completion.time.brk.1",
+      "completion.time.brk.2",
+      "completion.time.brk.3",
+      "completion.time.brk.4"
+    )
+  )
+tm_brk_S <-
+  setNames(
+    data.frame(matrix(
+      data = NA, nrow = 30, ncol = 4
+    )),
+    c(
+      "completion.time.brk.1",
+      "completion.time.brk.2",
+      "completion.time.brk.3",
+      "completion.time.brk.4"
+    )
+  )
+
+for (j in 1:30) {
+  for (k in 1:4) {
+    tm_brk_E[j, k] <-
+      60 * 24 * as.numeric(times(strsplit(toString(
+        data.frame(subj_data_survey_main[(5 * (j - 1) + k), 22])[[1]]
+      ), " ")[[1]][2]))
+    tm_brk_P[j, k] <-
+      60 * 24 * as.numeric(times(strsplit(toString(
+        data.frame(subj_data_survey_main[(5 * (j - 1) + k), 17])[[1]]
+      ), " ")[[1]][2]))
+    tm_brk_S[j, k] <-
+      60 * 24 * as.numeric(times(strsplit(toString(
+        data.frame(subj_data_survey_main[(5 * (j - 1) + k), 12])[[1]]
+      ), " ")[[1]][2]))
+  }
+}
+
+
+# putting the survey results in one file and standardizing based different desire answers
+desire_answers <-
+  c(3,
+    3,
+    3,
+    1,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    0,
+    100,
+    0,
+    100,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    100)
+
+subj_survey <- list(
+  cbind(
+    setNames(data.frame(c(1:30)),
+             "subject.num"),
+    setNames(data.frame(as.numeric(
+      factor(data.frame(subj_data_survey_main[5 * c(1:30) - 4, 3])[[1]]))),
+             "train.status"),
+    setNames(data.frame(subj_data_survey_main[5 * c(1:30) - 4, 4]),
+             "years.cat"),
+    setNames(data.frame(subj_data_survey_main[5 * c(1:30) - 4, 5]),
+             "age.range.cat"),
+    setNames(data.frame(as.numeric(
+      factor(data.frame(subj_data_survey_main[5 * c(1:30) - 4, 6])[[1]])) - 1),
+             "prior.experience.status"),
+    setNames(data.frame(as.numeric(
+      factor(data.frame(subj_data_survey_main[5 * c(1:30) - 4, 7])[[1]])) - 1),
+             "videogame.experience.status"),
+    setNames(data.frame(subj_data_survey_main[5 * c(1:30) - 4, 9]),
+             "order")
+  ),
+
+  cbind(
+    setNames(data.frame(c(1:30)),
+             "subject.num.E"),
+    tm_brk_E,
+    setNames(data.frame(tm_E),
+         "completion.time.avg"),
+    setNames(data.frame(subj_data_survey_main[5 * c(1:30) - 4, 24]),
+             "error.count"),
+    1 - abs(subj_data_survery_trans[3 * c(1:30), 4:7]
+            - t(replicate(30, desire_answers[1:4]))),
+    1 - abs(subj_data_survery_trans[3 * c(1:30), 8:24]
+            - t(replicate(30, desire_answers[5:21])))
+  ),
+
+  cbind(
+    setNames(data.frame(c(1:30)),
+             "subject.num.P"),
+    tm_brk_P, 
+    setNames(data.frame(tm_P),
+             "completion.time.avg"),
+    setNames(data.frame(subj_data_survey_main[5 * c(1:30) - 4, 19]),
+             "error.count"),
+    1 - abs(subj_data_survery_trans[3 * c(1:30) - 1, 4:7]
+            - t(replicate(30, desire_answers[1:4]))),
+    1 - abs(subj_data_survery_trans[3 * c(1:30) - 1, 8:24]
+            - t(replicate(30, desire_answers[5:21])))
+  ),
+
+  cbind(
+    setNames(data.frame(c(1:30)),
+             "subject.num.S"),
+    tm_brk_S,
+    setNames(data.frame(tm_S),
+             "completion.time.avg"),
+    setNames(data.frame(
+      subj_data_survey_main[5 * c(1:30) - 4, 14]),
+             "error.count"),
+    1 - abs(subj_data_survery_trans[3 * c(1:30) - 2, 4:7]
+            - t(replicate(30, desire_answers[1:4]))),
+    1 - abs(subj_data_survery_trans[3 * c(1:30) - 2, 8:24]
+            - t(replicate(30, desire_answers[5:21])))
+  )
+)
+
+
+# scaling the data between 0 and 1
+normalit01 <- function(m) {
+  return ((m - min(m, na.rm = TRUE)) / (max(m, na.rm = TRUE) - min(m, na.rm = TRUE)))
+}
+subj_survey_norm <- list(
+  cbind(
+    setNames(data.frame(c(1:30)),
+             "subject.num"),
+    setNames(data.frame(as.numeric(
+      factor(data.frame(subj_data_survey_main[5 * c(1:30) - 4, 3])[[1]]))),
+             "train.status"),
+    setNames(data.frame(subj_data_survey_main[5 * c(1:30) - 4, 4]),
+             "years.cat"),
+    setNames(data.frame(subj_data_survey_main[5 * c(1:30) - 4, 5]),
+             "age.range.cat"),
+    setNames(data.frame(as.numeric(
+      factor(data.frame(subj_data_survey_main[5 * c(1:30) - 4, 6])[[1]])) - 1),
+             "prior.experience.status"),
+    setNames(data.frame(as.numeric(
+      factor(data.frame(subj_data_survey_main[5 * c(1:30) - 4, 7])[[1]])) - 1),
+             "videogame.experience.status"),
+    setNames(data.frame(subj_data_survey_main[5 * c(1:30) - 4, 9]),
+             "order")
+  ),
+  
+  cbind(
+    setNames(data.frame(c(1:30)),
+             "subject.num.E"),
+    normalit01(tm_brk_E),
+    setNames(normalit01(data.frame(tm_E)),
+             "completion.time.avg"),
+    setNames(normalit01(data.frame(
+      subj_data_survey_main[5 * c(1:30) - 4, 24])),
+             "error.count"),
+    1 - abs(subj_data_survery_trans[3 * c(1:30), 4:7]
+            - t(replicate(30, desire_answers[1:4]))) / 
+      4,
+    1 - abs(subj_data_survery_trans[3 * c(1:30), 8:24]
+            - t(replicate(30, desire_answers[5:21]))) / 
+      100
+  ),
+  
+  cbind(
+    setNames(data.frame(c(1:30)),
+             "subject.num.P"),
+    normalit01(tm_brk_P),
+    setNames(normalit01(data.frame(tm_P)),
+             "completion.time.avg"),
+    setNames(normalit01(data.frame(
+      subj_data_survey_main[5 * c(1:30) - 4, 19])),
+    "error.count"),
+    1 - abs(subj_data_survery_trans[3 * c(1:30) - 1, 4:7]
+            - t(replicate(30, desire_answers[1:4]))) /
+      4,
+    1 - abs(subj_data_survery_trans[3 * c(1:30) - 1, 8:24]
+            - t(replicate(30, desire_answers[5:21]))) /
+      100
+  ),
+  
+  cbind(
+    setNames(data.frame(c(1:30)),
+             "subject.num.S"),
+    normalit01(tm_brk_S),
+    setNames(normalit01(data.frame(tm_S)),
+             "completion.time.avg"),
+    setNames(normalit01(data.frame(
+      subj_data_survey_main[5 * c(1:30) - 4, 14])),
+             "error.count"),
+    1 - abs(subj_data_survery_trans[3 * c(1:30) - 2, 4:7]
+            - t(replicate(30, desire_answers[1:4]))) /
+      4,
+    1 - abs(subj_data_survery_trans[3 * c(1:30) - 2, 8:24]
+            - t(replicate(30, desire_answers[5:21]))) /
+      100
+  )
+)
+
+
+# summarizing the survey results 
+survery_results_E <- t(setNames(data.frame(zapsmall(
+  colMeans(data.matrix(subj_survey[[2]])[, 6:28], na.rm = TRUE),
+  digits = 4
+)), "Excalibur.avgerage"))
+survery_results_P <- t(setNames(data.frame(zapsmall(
+  colMeans(data.matrix(subj_survey[[3]])[, 6:28], na.rm = TRUE),
+  digits = 4
+)), "Premium.avgerage"))
+survery_results_S <- t(setNames(data.frame(zapsmall(
+  colMeans(data.matrix(subj_survey[[4]])[, 6:28], na.rm = TRUE),
+  digits = 4
+)), "Simga7.avgerage"))
+
+
+# mean value of each question across all subjects
+sm <-
+  cbind(
+    setNames(data.frame(c(1:23)), "order"),
+    setNames(data.frame(
+      c(
+        "Completion Time Average",
+        "Error Count",
+        "A1: Ideal Workspace Size",
+        "A2: Ideal Hand Controller Size",
+        "A3: Ideal Grip Weight",
+        "A4: Tool Orienting Easiness",
+        "A5: Motion Smoothness",
+        "A6: Positioning Smoothness",
+        "A7: Orienting Smoothness",
+        "A8: Orienting Comfiness",
+        "A9: Motion Confidence",
+        "A10: Force Feedback Realness",
+        "A11: Non-unexpected Forces",
+        "A12: Force Feedback Usefulness",
+        "A13: Tooltip Positioning Easiness",
+        "A14: Motion Expected",
+        "A15: Pickup Tool Orienting Easiness",
+        "A16: Tool Roll Easiness",
+        "A17: Tool Pitch Easiness",
+        "A18: Tool Yaw Easiness",
+        "A19: Upper Lim Comfiness",
+        "A20: Wrist Comfiness",
+        "A21: Hand Controller Appearance"
+      )
+    ),
+    "question.name"),
+    setNames(data.frame(zapsmall(
+      colMeans(data.matrix(subj_survey_norm[[2]]
+      )[, 6:28],
+      na.rm = TRUE), digits = 4
+    )), "Excalibur Average"),
+    setNames(data.frame(zapsmall(
+      colMeans(data.matrix(subj_survey_norm[[3]]
+      )[, 6:28],
+      na.rm = TRUE), digits = 4
+    )), "Premium Average"),
+    setNames(data.frame(zapsmall(
+      colMeans(data.matrix(subj_survey_norm[[4]]
+      )[, 6:28],
+      na.rm = TRUE), digits = 4
+    )), "Sigma7 Average")
+  )
+
+sm$question.name <- factor(sm$question.name , levels = sm$question.name )
+
+df_transformed <- melt(
+  sm,
+  id.vars = "question.name",
+  measure.vars = c("Excalibur Average",
+                   "Premium Average",
+                   "Sigma7 Average")
+)
+
+# plot of performance of differenet hand controllers based on survey
+# the plot is colored by the hand controller groupName 'variable'
+# the results are scaled between 0 and 1 
+ggplot(df_transformed,
+       aes(
+         x = question.name,
+         y = value,
+         fill = variable,
+         label = round(value, digits = 1)
+       )) +
+  scale_fill_manual(values=c("mediumaquamarine", "salmon", "cornflowerblue")) + 
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  geom_text(size = 6, position = position_stack(vjust = 0.5)) +
+  ggtitle(label = "Performance of Differenet Hand Controllers ",
+          subtitle = "According to the Users from the Survey") +
+  labs(
+    caption = paste(
+      "Note: The normalized summary results of the questionnaire data",
+      "averaged across the participants along with\n the completion",
+      "time and error count results. The data are scaled between",
+      "0-1. Significant variables according to\n MANOVA tests in Section 2.1 are labeled with '*'."
+    )
+  ) +
+  xlab("Survey Question") +
+  ylab("Normalized Performance") +
+  labs(fill = "Hand Controller") +
+  geom_text(x=1, y=1.3, label="*", size = 10) +
+  geom_text(x=2, y=0.7, label="*", size = 10) +
+  geom_text(x=3, y=2.6, label="*", size = 10) +
+  geom_text(x=5, y=2.8, label="*", size = 10) +
+  geom_text(x=9, y=2.1, label="*", size = 10) +
+  geom_text(x=10, y=2.1, label="*", size = 10) +
+  geom_text(x=11, y=2.2, label="*", size = 10) +
+  geom_text(x=12, y=1.65, label="*", size = 10) +
+  geom_text(x=13, y=1.95, label="*", size = 10) +
+  geom_text(x=17, y=2.05, label="*", size = 10) +
+  geom_text(x=19, y=1.9, label="*", size = 10) +
+  geom_text(x=21, y=2.35, label="*", size = 10) +
+  geom_text(x=22, y=2.15, label="*", size = 10) +
+  theme(
+    plot.title = element_text(
+      size = 36,
+      face = "bold",
+      hjust = 0.5,
+      margin = margin(
+        t = 0,
+        r = 0,
+        b = 10,
+        l = 0
+      )
+    ),
+    plot.subtitle = element_text(
+      size = 28,
+      face = "bold",
+      hjust = 0.5,
+      margin = margin(
+        t = 0,
+        r = 0,
+        b = 10,
+        l = 0
+      )
+    ),
+    plot.caption = element_text(
+      size = 22,
+      hjust = 0,
+      margin = margin(
+        t = 30,
+        r = 0,
+        b = 0,
+        l = 0
+      )
+    ),
+    axis.text.x = element_text(
+      size = 24,
+      angle = 45,
+      hjust = 1,
+      margin = margin(
+        t = 0,
+        r = 0,
+        b = 20,
+        l = 0
+      )
+    ),
+    axis.text.y = element_text(
+      size = 24,
+      hjust = 1,
+      margin = margin(
+        t = 0,
+        r = 0,
+        b = 0,
+        l = 15
+      )
+    ),
+    axis.title.x = element_text(size = 32),
+    axis.title.y = element_text(size = 32,
+                                margin = margin(
+                                  t = 0,
+                                  r = 0,
+                                  b = 0,
+                                  l = 120
+                                )),
+    legend.text = element_text(size = 22),
+    legend.title = element_text(size = 24)
+  )
+
+############################################################################
+
+# plot of subject demographics vs. performance of differenet hand controllers
+# mean value of performance question results for each subject
+qm <- cbind(
+  setNames(data.frame(c(1:30)), "subject.num"),
+  setNames(data.frame(rowMeans(
+    subj_survey_norm[[2]][, 8:28],
+    na.rm = TRUE
+  )), "Excalibur Average"),
+  setNames(data.frame(rowMeans(
+    subj_survey_norm[[3]][, 8:28],
+    na.rm = TRUE
+  )), "Premium Average"),
+  setNames(data.frame(rowMeans(
+    subj_survey_norm[[4]][, 8:28],
+    na.rm = TRUE
+  )), "Sigma7 Average")
+)
+
+# summary of subject demographics picking each device
+ss_E <- subj_survey[[1]][which(apply(qm[, 2:4], 1, which.max) == 1), ]
+ss_P <- subj_survey[[1]][which(apply(qm[, 2:4], 1, which.max) == 2), ]
+ss_S <- subj_survey[[1]][which(apply(qm[, 2:4], 1, which.max) == 3), ]
+
+sd <- cbind(
+  setNames(data.frame(c(
+    dim(ss_E)[1],
+    zapsmall(colMeans(array(ss_E[, 2:6]),
+                      na.rm = TRUE), digits = 2)
+  )), "Excalibur"),
+  setNames(data.frame(c(
+    dim(ss_P)[1],
+    zapsmall(colMeans(array(ss_P[, 2:6]),
+                      na.rm = TRUE), digits = 2)
+  )), "Premium"),
+  setNames(data.frame(c(
+    dim(ss_S)[1],
+    zapsmall(colMeans(array(ss_S[, 2:6]),
+                      na.rm = TRUE), digits = 2)
+  )), "Sigma7")
+)
+
+row.names(sd) <-
+  c(
+    "Subject Counts Selected Device",
+    "Training Status",
+    "Year Level Category",
+    "Age Range Category",
+    "Prior Experience",
+    "Video Game Experience"
+  )
+
+# To use the fmsb package, I have to add 2 lines to the dataframe:
+# the max and min of each topic to show on the plot!
+sp_data <- data.frame(t(sd)[, 2:6])
+sp_data <- rbind(c(1, 5, 4, 1, 1) , c(0, 1, 1, 0, 0), sp_data)
+
+# making the spider graph
+colors_border = c(rgb(0.4, 0.86, 0.66, 0.9),
+                  rgb(1, 0.54, 0.41, 0.9) ,
+                  rgb(0.39, 0.58, 0.92, 0.9))
+colors_in = c(rgb(0.4, 0.86, 0.66, 0.4),
+              rgb(1, 0.54, 0.41, 0.5) ,
+              rgb(0.39, 0.58, 0.92, 0.4))
+radarchart(
+  sp_data,
+  axistype = 1 ,
+  # custom polygon
+  pcol = colors_border ,
+  pfcol = colors_in ,
+  plwd = 4 ,
+  plty = 1,
+  # custom the grid
+  cglcol = "grey",
+  cglty = 1,
+  axislabcol = "grey",
+  caxislabels = seq(0, 1, 0.25),
+  cglwd = 8,
+  calcex = 2,
+  # custom labels
+  vlabels = c(
+    "Training Status",
+    "Year Level Category",
+    "Age Range Category",
+    "Prior Experience",
+    "Video Game Experience"
+  ),
+  vlcex = 2,
+  title = "Summary of the Demographics of the Subjects Picking Each Device",
+  cex.main = 2.5,
+)
+legend(
+  x = 0.7,
+  y = 1,
+  legend = c(
+    "Excalibur: 25 Subjects",
+    "Premium: 2 Subjects",
+    "Sigma7: 3 Subject"
+  ),
+  bty = "n",
+  pch = 20 ,
+  col = colors_in ,
+  text.col = "grey",
+  cex = 2,
+  pt.cex = 8
+)
+
+save(subj_survey,survery_results_E,survery_results_P,survery_results_S,
+     file = paste("~/Desktop/Canada/neuroArm/neuroArmPLUS",
+       "/Smart Handcontroller/Part 2/data/ResultsGenSurvey.RData",  sep=""))
+
+save(subj_survey_norm,survery_results_E,survery_results_P,survery_results_S,
+     file = paste("~/Desktop/Canada/neuroArm/neuroArmPLUS",
+       "/Smart Handcontroller/Part 2/data/ResultsGenSurveyNorm.RData",  sep=""))
+
+```
+
+
+****
+
+## Extracting and Managing the Underlined Sensor Features used in User Performace Metrics {.tabset .tabset-fade}
+
+Following the summary results for the questionnaire, the direct data from the sensors and hand controllers are extracted and presented in this section. A header snapshot of the raw data are presented showing 6 rows starting from row 5000 for one of the participants. The recorded raw data included time in seconds, tool tip position, force feedback, gimbal and arm angles derived through Denavit–Hartenberg parameters all presented in x, y, and z axes, pinch value, pedal usage, and the number of clutch usage. The experiment trials were repeated 4 times with 4 peg-in-hole tasks within each trial forming a total of 16 experiment trials.    
+
+The recorded data were converted to the features associated with the hand controller users introduced in Hoshyarmanesh et al. 2019, being the sum of arm angles in the hand controller (*Arm Angle Sum*), time to complete the task (*Completion Time*), the root mean squared of force feed back (*Force RMS*), the sum of gimbal angles in the hand controller (*Gimbal Angle Sum*), the number of clutch use during the task (*Number of Clutches*), and the path length at the hand controller gripper to accomplish the task (*Travel Distance*). **Please note that for *Force RMS* and *Travel Distance* the data from slave robot end effector (*Kuka*) was utilized rather than the hand controller itself.** The calculated features were summarized for each participant by finding the average across the 16 task trials. In order to be consistent with the questionnaire data and for the sake simplicity in our comparisons, the extracted features were normalized between 0-1. Below are the visualized summary results for the data averaged across the participants. 
+
+```{r extract_performance_metrics, echo=TRUE, fig.align='center', fig.height=12, fig.width=20, warning=FALSE, cache=TRUE, out.width="95%"}
+
+load(
+  paste(
+    "~/Desktop/Canada/neuroArm/neuroArmPLUS",
+    "/Smart Handcontroller/Part 2/data/DataReadSensor.RData",
+    sep = ""
+  )
+)
+
+load(
+  paste(
+    "~/Desktop/Canada/neuroArm/neuroArmPLUS",
+    "/Smart Handcontroller/Part 2/data/DataReadSensorKuka.RData",
+    sep = ""
+  )
+)
+
+
+# Printing the top six rows of Subject 1's data as an example after row 5000
+head(subject1_features_E[5000:5500, ]) %>% round(digits = 3)
+
+abbrv_device <- c("E", "P", "S")
+completion_time <- array(NA, dim = c(30, 16, 3))
+travel_distance <- array(NA, dim = c(30, 16, 3))
+num_clutches <- array(NA, dim = c(30, 16, 3))
+sum_gimbangle <- array(NA, dim = c(30, 16, 3))
+sum_armangle <- array(NA, dim = c(30, 16, 3))
+sos_force <- array(NA, dim = c(30, 16, 3))
+for (i in 1:3) {
+  for (j in 1:30) {
+    for (k in 1:16) {
+      #print(paste0("device: ", i))
+      #print(paste0("subject: ", j))
+      #print(paste0("trial: ", k))
+      task_data <- get(paste0("subject", j,
+                              "_features_", 
+                              abbrv_device[i]))[get(paste0("subject", j, 
+                                                           "_features_",      
+                                                           abbrv_device[i]))[, "experim_num"] == k,]
+      task_data_kuka <- get(paste0("Kuka_subject", j,
+                                   "_features_", 
+                                   abbrv_device[i]))[get(paste0("Kuka_subject", j, 
+                                                                "_features_",      
+                                                                abbrv_device[i]))[, "experim_num"] == k,]
+      
+      if (dim(task_data)[1] != 0) {
+        # finding the completion time (CT)
+        completion_time[j, k, i] = max(task_data[, "time_in_sec"], na.rm =
+                                         FALSE)
+        - min(task_data[, "time_in_sec"], na.rm =
+                FALSE)
+        
+        # finding the travel distance (TD)
+        pos <-
+          task_data_kuka[, c("position_x", "position_y", "position_z")]
+        pos_diff <- pos[-1, ] - pos[-nrow(pos), ]
+        travel_distance[j, k, i] = sum(sqrt(rowSums(pos_diff * pos_diff)))
+        
+        # finding the number of clutches (NC)
+        num_clutches[j, k, i] = max(task_data[, "clutch_num"], na.rm = FALSE)
+        
+        # finding the sum of the variation of gimbal angle (sigma(delta_theta_4-6))
+        gimb <-
+          task_data[, c("gimbangle_x", "gimbangle_y", "gimbangle_z")]
+        gimb_diff <- gimb[-1, ] - gimb[-nrow(gimb), ]
+        sum_theta <- colSums(gimb_diff, na.rm = FALSE, dims = 1)
+        sum_gimbangle[j, k, i] = sum(abs(sum_theta))
+        
+        # finding the sum of the variation of arm angle (sigma(delta_theta_1-3))
+        arm <-
+          task_data[, c("armangle_x", "armangle_y", "armangle_z")]
+        arm_diff <- arm[-1, ] - arm[-nrow(arm), ]
+        sum_theta <- colSums(arm_diff, na.rm = FALSE, dims = 1)
+        sum_armangle[j, k, i] = sum(abs(sum_theta))
+        
+        # finding the squared root of sum of the squared forces (SOSF)
+        frc <- task_data_kuka[, c("force_x", "force_y", "force_z")]
+        sos_force[j, k, i] = sum(sqrt(rowSums(frc * frc)))
+      } else{
+        completion_time[j, k, i] = NA
+        travel_distance[j, k, i] = NA
+        num_clutches[j, k, i] = NA
+        sum_gimbangle[j, k, i] = NA
+        sum_armangle[j, k, i] = NA
+        sos_force[j, k, i] = NA
+      }
+      
+    }
+  }
+}
+
+# removing the outlier in sos_force
+sos_force[sos_force < 1] <- NA
+
+completion_time[completion_time == 0] <- NA
+travel_distance[travel_distance == 0] <- NA
+# num_clutches[num_clutches == 0] <- NA
+sum_gimbangle[sum_gimbangle == 0] <- NA
+sum_armangle[sum_armangle == 0] <- NA
+sos_force[sos_force == 0] <- NA
+
+completion_time_norm <- completion_time/1000
+travel_distance_norm <-  travel_distance/1000
+num_clutches_norm <- num_clutches/10
+sum_gimbangle_norm <- sum_gimbangle/5
+sum_armangle_norm <- sum_armangle
+sos_force_norm <- sos_force/100000
+
+
+
+# putting the sensor results in one file
+subj_feature <- list(
+  cbind(
+    setNames(data.frame(c(1:30)),
+             "subject.num.E"),
+    setNames(data.frame(rowMeans(completion_time[, , 1] ,na.rm = TRUE)),
+             "completion.time"),
+    setNames(data.frame(rowMeans(travel_distance[, , 1] ,na.rm = TRUE)),
+             "travel.distance"),
+    setNames(data.frame(rowMeans(num_clutches[, , 1] ,na.rm = TRUE)),
+             "number.clutches"),
+    setNames(data.frame(rowMeans(sos_force[, , 1] ,na.rm = TRUE)),
+             "sos.force"),
+    setNames(data.frame(rowMeans(sum_gimbangle[, , 1] ,na.rm = TRUE)),
+             "sum.gimbal.angle"),
+    setNames(data.frame(rowMeans(sum_armangle[, , 1] ,na.rm = TRUE)),
+             "sum.arm.angle")
+
+  ),
+
+  cbind(
+    setNames(data.frame(c(1:30)),
+             "subject.num.P"),
+    setNames(data.frame(rowMeans(completion_time[, , 2] ,na.rm = TRUE)),
+             "completion.time"),
+    setNames(data.frame(rowMeans(travel_distance[, , 2] ,na.rm = TRUE)),
+             "travel.distance"),
+    setNames(data.frame(rowMeans(num_clutches[, , 2] ,na.rm = TRUE)),
+             "number.clutches"),
+    setNames(data.frame(rowMeans(sos_force[, , 2] ,na.rm = TRUE)),
+             "sos.force"),
+    setNames(data.frame(rowMeans(sum_gimbangle[, , 2] ,na.rm = TRUE)),
+             "sum.gimbal.angle"),
+    setNames(data.frame(rowMeans(sum_armangle[, , 2] ,na.rm = TRUE)),
+             "sum.arm.angle")
+  ),
+
+  cbind(
+    setNames(data.frame(c(1:30)),
+             "subject.num.S"),
+    setNames(data.frame(rowMeans(completion_time[, , 3] ,na.rm = TRUE)),
+             "completion.time"),
+    setNames(data.frame(rowMeans(travel_distance[, , 3] ,na.rm = TRUE)),
+             "travel.distance"),
+    setNames(data.frame(rowMeans(num_clutches[, , 3] ,na.rm = TRUE)),
+             "number.clutches"),
+    setNames(data.frame(rowMeans(sos_force[, , 3] ,na.rm = TRUE)),
+             "sos.force"),
+    setNames(data.frame(rowMeans(sum_gimbangle[, , 3] ,na.rm = TRUE)),
+             "sum.gimbal.angle"),
+    setNames(data.frame(rowMeans(sum_armangle[, , 3] ,na.rm = TRUE)),
+             "sum.arm.angle")
+  )
+)
+
+
+# putting the sensor results in one file (scaled)
+subj_feature_norm <- list(
+  cbind(
+    setNames(data.frame(c(1:30)),
+             "subject.num.E"),
+    setNames(data.frame(rowMeans(completion_time_norm[, , 1] ,na.rm = TRUE)),
+             "completion.time"),
+    setNames(data.frame(rowMeans(travel_distance_norm[, , 1] ,na.rm = TRUE)),
+             "travel.distance"),
+    setNames(data.frame(rowMeans(num_clutches_norm[, , 1] ,na.rm = TRUE)),
+             "number.clutches"),
+    setNames(data.frame(rowMeans(sos_force_norm[, , 1] ,na.rm = TRUE)),
+             "sos.force"),
+    setNames(data.frame(rowMeans(sum_gimbangle_norm[, , 1] ,na.rm = TRUE)),
+             "sum.gimbal.angle"),
+    setNames(data.frame(rowMeans(sum_armangle_norm[, , 1] ,na.rm = TRUE)),
+             "sum.arm.angle")
+  ),
+
+  cbind(
+    setNames(data.frame(c(1:30)),
+             "subject.num.P"),
+    setNames(data.frame(rowMeans(completion_time_norm[, , 2] ,na.rm = TRUE)),
+             "completion.time"),
+    setNames(data.frame(rowMeans(travel_distance_norm[, , 2] ,na.rm = TRUE)),
+             "travel.distance"),
+    setNames(data.frame(rowMeans(num_clutches_norm[, , 2] ,na.rm = TRUE)),
+             "number.clutches"),
+    setNames(data.frame(rowMeans(sos_force_norm[, , 2] ,na.rm = TRUE)),
+             "sos.force"),
+    setNames(data.frame(rowMeans(sum_gimbangle_norm[, , 2] ,na.rm = TRUE)),
+             "sum.gimbal.angle"),
+    setNames(data.frame(rowMeans(sum_armangle_norm[, , 2] ,na.rm = TRUE)),
+             "sum.arm.angle")
+  ),
+
+  cbind(
+    setNames(data.frame(c(1:30)),
+             "subject.num.S"),
+    setNames(data.frame(rowMeans(completion_time_norm[, , 3] ,na.rm = TRUE)),
+             "completion.time"),
+    setNames(data.frame(rowMeans(travel_distance_norm[, , 3] ,na.rm = TRUE)),
+             "travel.distance"),
+    setNames(data.frame(rowMeans(num_clutches_norm[, , 3] ,na.rm = TRUE)),
+             "number.clutches"),
+    setNames(data.frame(rowMeans(sos_force_norm[, , 3] ,na.rm = TRUE)),
+             "sos.force"),
+    setNames(data.frame(rowMeans(sum_gimbangle_norm[, , 3] ,na.rm = TRUE)),
+             "sum.gimbal.angle"),
+    setNames(data.frame(rowMeans(sum_armangle_norm[, , 3] ,na.rm = TRUE)),
+             "sum.arm.angle")
+
+  )
+)
+
+
+save(
+  subj_feature,
+  completion_time,
+  travel_distance,
+  num_clutches,
+  sum_gimbangle,
+  sum_armangle,
+  sos_force,
+  file = paste(
+    "~/Desktop/Canada/neuroArm/neuroArmPLUS",
+    "/Smart Handcontroller/Part 2/data/FeatureGenSensor.RData",
+    sep = ""
+  )
+)
+
+
+save(
+  subj_feature_norm,
+  completion_time_norm,
+  travel_distance_norm,
+  num_clutches_norm,
+  sum_gimbangle_norm,
+  sum_armangle_norm,
+  sos_force_norm,
+  file = paste(
+    "~/Desktop/Canada/neuroArm/neuroArmPLUS",
+    "/Smart Handcontroller/Part 2/data/FeatureGenSensorNorm.RData",
+    sep = ""
+  )
+)
+
+```
+
+
+
+```{r plot_performance_metrics, echo=TRUE, fig.align='center', fig.height=12, fig.width=20, warning=FALSE, cache=TRUE, out.width="95%"}
+
+load(
+  paste(
+    "~/Desktop/Canada/neuroArm/neuroArmPLUS",
+    "/Smart Handcontroller/Part 2/data/FeatureGenSensor.RData",
+    sep = ""
+  )
+)
+
+load(
+  paste(
+    "~/Desktop/Canada/neuroArm/neuroArmPLUS",
+    "/Smart Handcontroller/Part 2/data/FeatureGenSensorNorm.RData",
+    sep = ""
+  )
+)
+
+# mean value of each feature across all subjects
+sm <-
+  cbind(
+    setNames(data.frame(
+      c(
+        "Travel Distance (m)",
+        "Number of Clutches",
+        "Force RMS (N)",
+        "Gimbal Angle Sum (Rad)",
+        "Arm Angle Sum (Rad)"
+      )
+    ),
+    "feature.name"),
+    setNames(data.frame(zapsmall(
+      colMeans(data.matrix(subj_feature_norm[[1]])[, 2:6], na.rm = TRUE), digits = 4
+    )), "Excalibur Average"),
+    setNames(data.frame(zapsmall(
+      colMeans(data.matrix(subj_feature_norm[[2]])[, 2:6], na.rm = TRUE), digits = 4
+    )), "Premium Average"),
+    setNames(data.frame(zapsmall(
+      colMeans(data.matrix(subj_feature_norm[[3]])[, 2:6], na.rm = TRUE), digits = 4
+    )), "Sigma7 Average")
+  )
+
+        
+df_transformed <- melt(
+  sm,
+  id.vars = "feature.name",
+  measure.vars = c("Excalibur Average",
+                   "Premium Average",
+                   "Sigma7 Average")
+)
+
+# plot of performance of differenet hand controllers based on sensor
+# the plot is colored by the hand controller groupName 'variable'
+# the results are scaled between 0 and 1
+ggplot(df_transformed,
+       aes(
+         x = feature.name,
+         y = value,
+         fill = variable,
+         label = value
+       )) +
+  geom_text(x=1, y=0.6, label="*", size = 12) +
+  geom_text(x=2, y=0.55, label="*", size = 12) +
+  geom_text(x=5, y=0.77, label="*", size = 12) +
+  scale_fill_manual(values=c("mediumaquamarine", "salmon", "cornflowerblue")) + 
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  geom_text(size = 6, position = position_stack(vjust = 0.5)) +
+  ggtitle(label = "Features used in Performance Metrics for Differenet Hand Controllers ",
+          subtitle = "According to the Users from the Sensor Data") +
+  annotate('text', x = 3, y = 1.6, 
+        label = "The~data~are~scaled~between~0~and~1~
+                 where~the~Gimbal~Angle~Sum~is~divided~by~5" , parse = TRUE, size=8) +
+  annotate('text', x = 3, y = 1.4, 
+        label = "Force~RMS~by~10^{5}~-
+                 ~Number~of~Clutches~by~10~
+                 and~Travel~Distance~by~10^{3}" , parse = TRUE, size=8) +
+  labs(
+    caption = paste(
+      "Note: The normalized summary results of the performance features",
+      "from the recorded data by the hand controller\n averaged across",
+      "the participants. Please note that the arm angle data was not recorded by Sigma7.",
+      "Significant\n variables according to MANOVA tests in Section 2.2 are labeled with '*'."
+    )
+  ) +
+  xlab("Feature from Sensor Data") +
+  ylab("Normalized Feature") +
+  labs(fill = "Hand Controller") +
+  theme(
+    plot.title = element_text(
+      size = 36,
+      face = "bold",
+      hjust = 0.5,
+      margin = margin(
+        t = 0,
+        r = 0,
+        b = 10,
+        l = 0
+      )
+    ),
+    plot.subtitle = element_text(
+      size = 28,
+      face = "bold",
+      hjust = 0.5,
+      margin = margin(
+        t = 0,
+        r = 0,
+        b = 10,
+        l = 0
+      )
+    ),
+    plot.caption = element_text(
+      size = 22,
+      hjust = 0,
+      margin = margin(
+        t = 30,
+        r = 0,
+        b = 0,
+        l = 0
+      )
+    ),
+    axis.text.x = element_text(
+      size = 24,
+      angle = 45,
+      hjust = 1,
+      margin = margin(
+        t = 0,
+        r = 0,
+        b = 20,
+        l = 0
+      )
+    ),
+    axis.text.y = element_text(
+      size = 24,
+      hjust = 1,
+      margin = margin(
+        t = 0,
+        r = 0,
+        b = 0,
+        l = 15
+      )
+    ),
+    axis.title.x = element_text(size = 32),
+    axis.title.y = element_text(size = 32,
+                                margin = margin(
+                                  t = 0,
+                                  r = 0,
+                                  b = 0,
+                                  l = 120
+                                )),
+    legend.text = element_text(size = 22),
+    legend.title = element_text(size = 24)
+  )
+
+
+
+
+```
+
+
+****
+
+## Calculating the User Performance Metrics {.tabset .tabset-fade}
+
+In this section, the performance metrics as defined in Hoshyarmanesh et al. 2019 were calculated based on the features derived in the previous section. The performance metrics included the hand controller maneuverability expressed in terms of the level of angular movement over time (*Performance (angular maneuver)*), time to finish the task (*Performance (completion time)*), the force exerted over the path length of the trajectory (*Performance (force over distance)*), the number of clutch use during the task (*Performance (number of clutches)*), and the path length of the overall trajectory (*Performance (travel distance)*). 
+
+For the similar reasons mentioned above, the calculated performance metrics were scaled between 0-1. Below are the visualized summary results for the performance metrics data averaged across the participants. **In this figure, the values closer to 1 indicate a better performance.**
+
+```{r generate_performance, eval=TRUE, fig.align='center', fig.height=12, fig.width=20, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+# reading data from the saved file
+load(
+  paste(
+    "~/Desktop/Canada/neuroArm/neuroArmPLUS",
+    "/Smart Handcontroller/Part 2/data/FeatureGenSensor.RData",
+    sep = ""
+  )
+)
+
+load(
+  paste(
+    "~/Desktop/Canada/neuroArm/neuroArmPLUS",
+    "/Smart Handcontroller/Part 2/data/ResultsGenSurvey.RData",
+    sep = ""
+  )
+)
+
+
+ct_ref <- 15 # reference completion time 15 sec
+td_ref <- 0.2 # reference travel distance 0.2 m
+nc_ref <- 1  # reference number of clutches
+b <- 25 # b = NC_max - NC_red = 26 - 1 = 25 (max value was actually 62 -> outlier)
+
+perf_u_ct_all <- array(NA, dim = c(1, 3))
+perf_u_td_all <- array(NA, dim = c(1, 3))
+perf_u_nc_all <- array(NA, dim = c(1, 3))
+perf_u_dt_all <- array(NA, dim = c(1, 3))
+perf_u_sf_all <- array(NA, dim = c(1, 3))
+for (i in 1:3) {
+  perf_u_ct_all[, i] = ct_ref / mean(subj_survey[[i+1]]$completion.time.avg, na.rm = TRUE) 
+  perf_u_td_all[, i] = td_ref / mean(rowMeans(travel_distance[, , i], na.rm = TRUE), na.rm = TRUE) * 500
+  perf_u_nc_all[, i] = sqrt(1 - ((mean( rowMeans(num_clutches[, , i], na.rm = TRUE), na.rm = TRUE) - 
+                                nc_ref) / b) ^ 2) / 5
+  perf_u_dt_all[, i] = mean(rowMeans(sum_gimbangle[, , i], na.rm = TRUE), na.rm = TRUE) / 
+                       (30 * mean(subj_survey[[i+1]]$completion.time.avg, na.rm = TRUE) * 
+                             mean(rowMeans(travel_distance[, , i], na.rm = TRUE), na.rm = TRUE)) * 10^5
+  perf_u_sf_all[, i] = mean(rowMeans(sos_force[, , i], na.rm = TRUE), na.rm = TRUE) / 
+                       (mean(subj_survey[[i+1]]$completion.time.avg, na.rm = TRUE) * 
+                        mean(rowMeans(travel_distance[, , i], na.rm = TRUE), na.rm = TRUE)) / 5
+}
+
+# mean value of each feature across all subjects
+sm <-
+  cbind(
+    setNames(data.frame(
+      c(
+        "Performance (completion time)",
+        "Performance (travel distance)",
+        "Performance (number of clutches)",
+        "Performance (angular maneuver)",
+        "Performance (force over distance)"
+      )
+    ),
+    "perf.name"),
+    setNames(data.frame(zapsmall(
+      c(perf_u_ct_all[, 1], 
+        perf_u_td_all[, 1], 
+        perf_u_nc_all[, 1], 
+        perf_u_dt_all[, 1], 
+        perf_u_sf_all[, 1]), digits = 4
+    )), "Excalibur Average"),
+    setNames(data.frame(zapsmall(
+      c(perf_u_ct_all[, 2], 
+        perf_u_td_all[, 2], 
+        perf_u_nc_all[, 2], 
+        perf_u_dt_all[, 2], 
+        perf_u_sf_all[, 2]), digits = 4
+    )), "Premium Average"),
+    setNames(data.frame(zapsmall(
+      c(perf_u_ct_all[, 3], 
+        perf_u_td_all[, 3], 
+        perf_u_nc_all[, 3], 
+        perf_u_dt_all[, 3], 
+        perf_u_sf_all[, 3]), digits = 4
+    )), "Sigma7 Average")
+  )
+
+
+df_transformed <- melt(
+  sm,
+  id.vars = "perf.name",
+  measure.vars = c("Excalibur Average",
+                   "Premium Average",
+                   "Sigma7 Average")
+)
+
+# plot of performance of differenet hand controllers based on sensor
+# the plot is colored by the hand controller groupName 'variable'
+# the results are normalized between 0 and 1 (1 showing the best performance)
+ggplot(df_transformed,
+       aes(
+         x = perf.name,
+         y = value,
+         fill = variable,
+         label = value
+       )) +
+  scale_fill_manual(values=c("mediumaquamarine", "salmon", "cornflowerblue")) + 
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  geom_text(size = 6, position = position_stack(vjust = 0.5)) +
+  ggtitle(label = "Comparison of Performance Metrics for Differenet Hand Controllers ",
+          subtitle = "According to the Users from the Sensor Data") +
+  annotate('text', x = 3, y = 1.8, 
+        label = "The~data~are~scaled~between~0~and~1~
+                 where~the~Angular~Maneuver~is~multiplied~by~10^{5}" , parse = TRUE, size=8) +
+  annotate('text', x = 3, y = 1.6, 
+        label = "Travel~Distance~by~5~x~10^{2}~
+                  and~Force~over~Distance~and~Number~of~Clutches~divided~by~5" , parse = TRUE, size=8) +
+  labs(
+    caption = paste(
+      "Note: The normalized summary results of the performance metrics",
+      "calculated from the performance features\n averaged across the",
+      "participants."
+    )
+  ) +
+  xlab("Performance Metric from Sensor Data") +
+  ylab("Normalized Performace Level") +
+  labs(fill = "Hand Controller") +
+  theme(
+    plot.title = element_text(
+      size = 36,
+      face = "bold",
+      hjust = 0.5,
+      margin = margin(
+        t = 0,
+        r = 0,
+        b = 10,
+        l = 0
+      )
+    ),
+    plot.subtitle = element_text(
+      size = 28,
+      face = "bold",
+      hjust = 0.5,
+      margin = margin(
+        t = 0,
+        r = 0,
+        b = 10,
+        l = 0
+      )
+    ),
+    plot.caption = element_text(
+      size = 22,
+      hjust = 0,
+      margin = margin(
+        t = 30,
+        r = 0,
+        b = 0,
+        l = 0
+      )
+    ),
+    axis.text.x = element_text(
+      size = 24,
+      angle = 45,
+      hjust = 1,
+      margin = margin(
+        t = 0,
+        r = 0,
+        b = 20,
+        l = 0
+      )
+    ),
+    axis.text.y = element_text(
+      size = 24,
+      hjust = 1,
+      margin = margin(
+        t = 0,
+        r = 0,
+        b = 0,
+        l = 15
+      )
+    ),
+    axis.title.x = element_text(size = 32),
+    axis.title.y = element_text(size = 32,
+                                margin = margin(
+                                  t = 0,
+                                  r = 0,
+                                  b = 0,
+                                  l = 120
+                                )),
+    legend.text = element_text(size = 22),
+    legend.title = element_text(size = 24)
+  )
+
+save(
+  perf_u_ct_all,
+  perf_u_td_all,
+  perf_u_nc_all,
+  perf_u_dt_all,
+  perf_u_sf_all,
+  file = paste(
+    "~/Desktop/Canada/neuroArm/neuroArmPLUS",
+    "/Smart Handcontroller/Part 2/data/PerformanceUsersAll.RData",
+    sep = ""
+  )
+)
+
+```
+
+****
+
+## Sub-task Performance Breakdowns {.tabset .tabset-fade}
+
+The following section provides the pirateplots of the breakdowns for the peg-in-hole subtasks with 4 different **peg** shapes. The results for scaled *Completion Time*, *Travel Distance*, and the *Number of Clutches* are shown across the 3 different hand controllers. While the average value of features differ for different hand controllers, the pattern of change in the features for each peg is consistent among different devices. Surprisingly, this pattern is ascending for the *Completion Time* meaning that the shape of peg has a larger effect on the time rather than being accustomed to the task. In addition, the results indicate a higher values of *Travel Distance* for Peg 2 as well as the *Number of Clutches* (except for Sigma7 which is slightly lower that Peg 3). The easiest peg was found to be Peg 1 according to all three features.
+
+```{r subtask.breakdown.data, eval=TRUE, fig.align='center', fig.height=6, fig.width=8, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+# reading data from the saved file
+load(
+  paste(
+    "~/Desktop/Canada/neuroArm/neuroArmPLUS",
+    "/Smart Handcontroller/Part 2/data/ResultsGenSurveyNorm.RData",
+    sep = ""
+  )
+)
+
+load(
+  paste(
+    "~/Desktop/Canada/neuroArm/neuroArmPLUS",
+    "/Smart Handcontroller/Part 2/data/FeatureGenSensorNorm.RData",
+    sep = ""
+  )
+)
+
+
+CT <- rbind(cbind(setNames(data.frame(rep(c(1:30), 4)), "user"),
+                  setNames(data.frame(rep("Excalibur", 120)), "Device"),
+                  setNames(data.frame(c(rep("1", 30), rep("2", 30), rep("3", 30), rep("4", 30))), "Peg"),
+                  setNames(data.frame(c(rowMeans(completion_time_norm[, c(1, 5, 9, 13), 1], na.rm = TRUE),
+                                        rowMeans(completion_time_norm[, c(2, 6, 10, 14), 1], na.rm = TRUE),
+                                        rowMeans(completion_time_norm[, c(3, 7, 11, 15), 1], na.rm = TRUE),
+                                        rowMeans(completion_time_norm[, c(4, 8, 12, 16), 1], na.rm = TRUE))), "completion.time")),
+            cbind(setNames(data.frame(rep(c(1:30), 4)), "user"),
+                  setNames(data.frame(rep("Premium", 120)), "Device"),
+                  setNames(data.frame(c(rep("1", 30), rep("2", 30), rep("3", 30), rep("4", 30))), "Peg"),
+                  setNames(data.frame(c(rowMeans(completion_time_norm[, c(1, 5, 9, 13), 2], na.rm = TRUE),
+                                        rowMeans(completion_time_norm[, c(2, 6, 10, 14), 2], na.rm = TRUE),
+                                        rowMeans(completion_time_norm[, c(3, 7, 11, 15), 2], na.rm = TRUE),
+                                        rowMeans(completion_time_norm[, c(4, 8, 12, 16), 2], na.rm = TRUE))), "completion.time")),
+            cbind(setNames(data.frame(rep(c(1:30), 4)), "user"),
+                  setNames(data.frame(rep("Sigma7", 120)), "Device"),
+                  setNames(data.frame(c(rep("1", 30), rep("2", 30), rep("3", 30), rep("4", 30))), "Peg"),
+                  setNames(data.frame(c(rowMeans(completion_time_norm[, c(1, 5, 9, 13), 3], na.rm = TRUE),
+                                        rowMeans(completion_time_norm[, c(2, 6, 10, 14), 3], na.rm = TRUE),
+                                        rowMeans(completion_time_norm[, c(3, 7, 11, 15), 3], na.rm = TRUE),
+                                        rowMeans(completion_time_norm[, c(4, 8, 12, 16), 3], na.rm = TRUE))), "completion.time"))
+          )
+
+
+
+TD <- rbind(cbind(setNames(data.frame(rep(c(1:30), 4)), "user"),
+                  setNames(data.frame(rep("Excalibur", 120)), "Device"),
+                  setNames(data.frame(c(rep("1", 30), rep("2", 30), rep("3", 30), rep("4", 30))), "Peg"),
+                  setNames(data.frame(c(rowMeans(travel_distance_norm[, c(1, 5, 9, 13), 1], na.rm = TRUE),
+                                        rowMeans(travel_distance_norm[, c(2, 6, 10, 14), 1], na.rm = TRUE),
+                                        rowMeans(travel_distance_norm[, c(3, 7, 11, 15), 1], na.rm = TRUE),
+                                        rowMeans(travel_distance_norm[, c(4, 8, 12, 16), 1], na.rm = TRUE))), "travel.distance")),
+            cbind(setNames(data.frame(rep(c(1:30), 4)), "user"),
+                  setNames(data.frame(rep("Premium", 120)), "Device"),
+                  setNames(data.frame(c(rep("1", 30), rep("2", 30), rep("3", 30), rep("4", 30))), "Peg"),
+                  setNames(data.frame(c(rowMeans(travel_distance_norm[, c(1, 5, 9, 13), 2], na.rm = TRUE),
+                                        rowMeans(travel_distance_norm[, c(2, 6, 10, 14), 2], na.rm = TRUE),
+                                        rowMeans(travel_distance_norm[, c(3, 7, 11, 15), 2], na.rm = TRUE),
+                                        rowMeans(travel_distance_norm[, c(4, 8, 12, 16), 2], na.rm = TRUE))), "travel.distance")),
+            cbind(setNames(data.frame(rep(c(1:30), 4)), "user"),
+                  setNames(data.frame(rep("Sigma7", 120)), "Device"),
+                  setNames(data.frame(c(rep("1", 30), rep("2", 30), rep("3", 30), rep("4", 30))), "Peg"),
+                  setNames(data.frame(c(rowMeans(travel_distance_norm[, c(1, 5, 9, 13), 3], na.rm = TRUE),
+                                        rowMeans(travel_distance_norm[, c(2, 6, 10, 14), 3], na.rm = TRUE),
+                                        rowMeans(travel_distance_norm[, c(3, 7, 11, 15), 3], na.rm = TRUE),
+                                        rowMeans(travel_distance_norm[, c(4, 8, 12, 16), 3], na.rm = TRUE))), "travel.distance"))
+          )
+
+
+NC <- rbind(cbind(setNames(data.frame(rep(c(1:30), 4)), "user"),
+                  setNames(data.frame(rep("Excalibur", 120)), "Device"),
+                  setNames(data.frame(c(rep("1", 30), rep("2", 30), rep("3", 30), rep("4", 30))), "Peg"),
+                  setNames(data.frame(c(rowMeans(num_clutches_norm[, c(1, 5, 9, 13), 1], na.rm = TRUE),
+                                        rowMeans(num_clutches_norm[, c(2, 6, 10, 14), 1], na.rm = TRUE),
+                                        rowMeans(num_clutches_norm[, c(3, 7, 11, 15), 1], na.rm = TRUE),
+                                        rowMeans(num_clutches_norm[, c(4, 8, 12, 16), 1], na.rm = TRUE))), "number.clutches")),
+            cbind(setNames(data.frame(rep(c(1:30), 4)), "user"),
+                  setNames(data.frame(rep("Premium", 120)), "Device"),
+                  setNames(data.frame(c(rep("1", 30), rep("2", 30), rep("3", 30), rep("4", 30))), "Peg"),
+                  setNames(data.frame(c(rowMeans(num_clutches_norm[, c(1, 5, 9, 13), 2], na.rm = TRUE),
+                                        rowMeans(num_clutches_norm[, c(2, 6, 10, 14), 2], na.rm = TRUE),
+                                        rowMeans(num_clutches_norm[, c(3, 7, 11, 15), 2], na.rm = TRUE),
+                                        rowMeans(num_clutches_norm[, c(4, 8, 12, 16), 2], na.rm = TRUE))), "number.clutches")),
+            cbind(setNames(data.frame(rep(c(1:30), 4)), "user"),
+                  setNames(data.frame(rep("Sigma7", 120)), "Device"),
+                  setNames(data.frame(c(rep("1", 30), rep("2", 30), rep("3", 30), rep("4", 30))), "Peg"),
+                  setNames(data.frame(c(rowMeans(num_clutches_norm[, c(1, 5, 9, 13), 3], na.rm = TRUE),
+                                        rowMeans(num_clutches_norm[, c(2, 6, 10, 14), 3], na.rm = TRUE),
+                                        rowMeans(num_clutches_norm[, c(3, 7, 11, 15), 3], na.rm = TRUE),
+                                        rowMeans(num_clutches_norm[, c(4, 8, 12, 16), 3], na.rm = TRUE))), "number.clutches"))
+          )
+
+```
+
+### Completion Time
+
+```{r subtask.breakdown.ct, eval=TRUE, fig.align='center', fig.height=6, fig.width=8, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+pirateplot(
+  formula = completion.time ~ Peg + Device,
+  data = CT,
+  main = "Pirateplots of Completion Time Breakdown over Different Subtasks",
+  ylab = "Completion Time (based on sensor data)",
+  theme = 2,
+  pal = "pony",
+  inf.f.o = .6,
+  inf.disp = "bean",
+  point.o = .3,   
+  # Turn up points
+  bean.b.o = .4,
+  # Turn down bean borders
+  quant = c(.1, .9),
+  # 10th and 90th quantiles
+  quant.col = "black" # Black quantile lines
+) 
+
+```
+
+### Travel Distance
+
+```{r subtask.breakdown.td, eval=TRUE, fig.align='center', fig.height=6, fig.width=8, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+pirateplot(
+  formula = travel.distance ~ Peg + Device,
+  data = TD,
+  main = "Pirateplots of Travel Distance Breakdown over Different Subtasks",
+  ylab = "Travel Distance",
+  theme = 2,
+  pal = "pony",
+  inf.f.o = .6,
+  inf.disp = "bean",
+  point.o = .3,   
+  # Turn up points
+  bean.b.o = .4,
+  # Turn down bean borders
+  quant = c(.1, .9),
+  # 10th and 90th quantiles
+  quant.col = "black" # Black quantile lines
+)
+
+```
+
+### Number of Clutches
+
+```{r subtask.breakdown.nc, eval=TRUE, fig.align='center', fig.height=6, fig.width=8, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+pirateplot(
+  formula = number.clutches ~ Peg + Device,
+  data = NC,
+  main = "Pirateplots of Number of Clutches Breakdown over Different Subtasks",
+  ylab = "Number of Clutches",
+  theme = 2,    
+  pal = "pony",
+  inf.f.o = .6,
+  inf.disp = "bean",
+  point.o = .3,   
+  # Turn up points
+  bean.b.o = .4,
+  # Turn down bean borders
+  quant = c(.1, .9),
+  # 10th and 90th quantiles
+  quant.col = "black" # Black quantile lines
+) 
+
+
+```
+
+
+****
+
+# Statistical Tests and Relationship Establishments
+
+## Performing the MANOVA and MANCOVA Tests on Survey Results {.tabset .tabset-fade}
+
+```{r stat_tests_survey_read, eval=TRUE, fig.align='center', fig.height=12, fig.width=20, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+# reading data from the saved file
+load(
+  paste(
+    "~/Desktop/Canada/neuroArm/neuroArmPLUS",
+    "/Smart Handcontroller/Part 2/data/ResultsGenSurvey.RData",
+    sep = ""
+  )
+)
+
+df_transformed <-
+  rbind(
+    cbind(subj_survey[[1]][, 2:7], subj_survey[[2]][, 6:28],
+          device = 'Excalibur'),
+    cbind(subj_survey[[1]][, 2:7], subj_survey[[3]][, 6:28],
+          device = 'Premium'),
+    cbind(subj_survey[[1]][, 2:7], subj_survey[[4]][, 6:28],
+          device = 'Sigma7')
+  )
+
+
+```
+
+In this section, the statistical tests of MANOVA (comparing the subjective performance results considering devices as the factor) and MANCOVA (comparing the subjective performance results considering devices as the factor and the demographic variables as the covariates) were performed on the survey results. Repeated measures ANOVA was not utilized here since the comparisons between the response variables (each question or feature) is not of interest, rather the effects of observed factor (different hand controllers) on the multivariate responses is important (Friedrich et al. 2018). The significance codes for differences between devices in these tests are provided below each test result. The hand controllers were significantly different in terms of various survey subjective results. Among them, the completion time (`completion.time.avg`), error count (`error.count`), the workspace (`A1`), the weight (`A3`), orientation smoothness and comfiness (`A7` and `A8`), unexpected force feedback (`A11`), and wrist and upper arm fatigue level (`A19` and `A20`) were the most significant responses. Additionally, Year Level Category (`years.cat`) and Video Game Experience (`videogame.experience.status`) were the significant covariates.
+
+
+
+### MANOVA Test Results {.tabset .tabset-fade}
+
+Overall test summary:
+
+```{r stat_tests_survey_manova, eval=TRUE, fig.align='center', fig.height=12, fig.width=20, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+# MANOVA test
+res.man <- manova(
+  cbind(
+    completion.time.avg,
+    error.count,
+    A1,
+    A2,
+    A3,
+    A4,
+    A5,
+    A6,
+    A7,
+    A8,
+    A9,
+    A10,
+    A11,
+    A12,
+    A13,
+    A14,
+    A15,
+    A16,
+    A17,
+    A18,
+    A19,
+    A20,
+    A21
+  ) ~ device,
+  data = df_transformed
+)
+summary(res.man)
+
+```
+
+Summary of the analysis of variance model:
+
+```{r stat_tests_survey_manova_detail, eval=TRUE, fig.align='center', fig.height=12, fig.width=20, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+# Look to see which differ
+summary.aov(res.man)
+
+```
+
+
+### MANCOVA Test Results {.tabset .tabset-fade}
+
+Overall test summary:
+
+```{r stat_tests_survey_mancova, echo=TRUE, fig.align='center', fig.height=12, fig.width=20, warning=TRUE, cache=TRUE, out.width="95%"}
+
+# MANCOVA test
+res.manc <- manova(
+  cbind(
+    completion.time.avg,
+    error.count,
+    A1,
+    A2,
+    A3,
+    A4,
+    A5,
+    A6,
+    A7,
+    A8,
+    A9,
+    A10,
+    A11,
+    A12,
+    A13,
+    A14,
+    A15,
+    A16,
+    A17,
+    A18,
+    A19,
+    A20,
+    A21
+  ) ~ device +
+    train.status + years.cat + age.range.cat + prior.experience.status +
+    videogame.experience.status,
+  data = df_transformed
+)
+
+summary(res.manc)
+
+
+```
+
+Summary of the analysis of variance model:
+
+```{r stat_tests_survey_mancova_detail, eval=TRUE, fig.align='center', fig.height=12, fig.width=20, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+# Look to see which differ
+summary.aov(res.manc)
+
+```
+
+### Post-hoc Tukey's Test for the Pair-wise Differences among the Hand Controllers {.tabset .tabset-fade}
+
+In the snippet below, the post-hoc Tukey's tests were applied on the significant variables obtained in the previous section. The confidence intervals within the family-wise confidence level graphs that does not include zero indicates a significant different between the corresponding pair of hand controllers.
+
+#### Completion Time 
+
+```{r completion.time.avg_post_hoc, eval=TRUE, fig.align='center', fig.height=6, fig.width=10, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+# completion.time.avg
+print("completion.time.avg:")
+tk.lm <- lm(completion.time.avg
+            ~ device,
+            data = df_transformed)
+tk.av <- aov(tk.lm)
+
+tukey.test <- TukeyHSD(tk.av)
+tukey.test
+plot(tukey.test, sub="for Completion Time", cex.main=2, cex.lab=1.5, cex.axis=1, col = "blue")
+
+
+```
+
+#### Error Count 
+
+```{r error.count_post_hoc, eval=TRUE, fig.align='center', fig.height=6, fig.width=10, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+# error.count
+print("error.count:")
+tk.lm <- lm(error.count
+            ~ device,
+            data = df_transformed)
+tk.av <- aov(tk.lm)
+
+tukey.test <- TukeyHSD(tk.av)
+tukey.test
+plot(tukey.test, sub="for Error Count", cex.main=2, cex.lab=1.5, cex.axis=1, col = "blue")
+
+```
+
+#### Question A1 
+
+```{r A1_post_hoc, eval=TRUE, fig.align='center', fig.height=6, fig.width=10, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+# A1
+print("A1:")
+tk.lm <- lm(A1
+            ~ device,
+            data = df_transformed)
+tk.av <- aov(tk.lm)
+
+tukey.test <- TukeyHSD(tk.av)
+tukey.test
+plot(tukey.test, sub="for A1", cex.main=2, cex.lab=1.5, cex.axis=1, col = "blue")
+
+```
+
+#### Question A3 
+
+```{r A3_post_hoc, eval=TRUE, fig.align='center', fig.height=6, fig.width=10, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+# A3
+print("A3:")
+tk.lm <- lm(A3
+            ~ device,
+            data = df_transformed)
+tk.av <- aov(tk.lm)
+
+tukey.test <- TukeyHSD(tk.av)
+tukey.test
+plot(tukey.test, sub="for A3", cex.main=2, cex.lab=1.5, cex.axis=1, col = "blue")
+
+```
+
+#### Question A7 
+
+```{r A7_post_hoc, eval=TRUE, fig.align='center', fig.height=6, fig.width=10, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+# A7
+print("A7:")
+tk.lm <- lm(A7
+            ~ device,
+            data = df_transformed)
+tk.av <- aov(tk.lm)
+
+tukey.test <- TukeyHSD(tk.av)
+tukey.test
+plot(tukey.test, sub="for A7", cex.main=2, cex.lab=1.5, cex.axis=1, col = "blue")
+
+```
+
+#### Question A8 
+
+```{r A8_post_hoc, eval=TRUE, fig.align='center', fig.height=6, fig.width=10, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+# A8
+print("A8:")
+tk.lm <- lm(A8
+            ~ device,
+            data = df_transformed)
+tk.av <- aov(tk.lm)
+
+tukey.test <- TukeyHSD(tk.av)
+tukey.test
+plot(tukey.test, sub="for A8", cex.main=2, cex.lab=1.5, cex.axis=1, col = "blue")
+
+```
+
+#### Question A9 
+
+```{r A9_post_hoc, eval=TRUE, fig.align='center', fig.height=6, fig.width=10, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+# A9
+print("A9:")
+tk.lm <- lm(A9
+            ~ device,
+            data = df_transformed)
+tk.av <- aov(tk.lm)
+
+tukey.test <- TukeyHSD(tk.av)
+tukey.test
+plot(tukey.test, sub="for A9", cex.main=2, cex.lab=1.5, cex.axis=1, col = "blue")
+
+```
+
+#### Question A10 
+
+```{r A10_post_hoc, eval=TRUE, fig.align='center', fig.height=6, fig.width=10, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+# A10
+print("A10:")
+tk.lm <- lm(A10
+            ~ device,
+            data = df_transformed)
+tk.av <- aov(tk.lm)
+
+tukey.test <- TukeyHSD(tk.av)
+tukey.test
+plot(tukey.test, sub="for A10", cex.main=2, cex.lab=1.5, cex.axis=1, col = "blue")
+
+```
+
+#### Question A11 
+
+```{r A11_post_hoc, eval=TRUE, fig.align='center', fig.height=6, fig.width=10, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+# A11
+print("A11:")
+tk.lm <- lm(A11
+            ~ device,
+            data = df_transformed)
+tk.av <- aov(tk.lm)
+
+tukey.test <- TukeyHSD(tk.av)
+tukey.test
+plot(tukey.test, sub="for A11", cex.main=2, cex.lab=1.5, cex.axis=1, col = "blue")
+
+```
+
+#### Question A15 
+
+```{r A15_post_hoc, eval=TRUE, fig.align='center', fig.height=6, fig.width=10, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+# A15
+print("A15:")
+tk.lm <- lm(A15
+            ~ device,
+            data = df_transformed)
+tk.av <- aov(tk.lm)
+
+tukey.test <- TukeyHSD(tk.av)
+tukey.test
+plot(tukey.test, sub="for A15", cex.main=2, cex.lab=1.5, cex.axis=1, col = "blue")
+
+```
+
+#### Question A17 
+
+```{r A17_post_hoc, eval=TRUE, fig.align='center', fig.height=6, fig.width=10, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+# A17
+print("A17:")
+tk.lm <- lm(A17
+            ~ device,
+            data = df_transformed)
+tk.av <- aov(tk.lm)
+
+tukey.test <- TukeyHSD(tk.av)
+tukey.test
+plot(tukey.test, sub="for A17", cex.main=2, cex.lab=1.5, cex.axis=1, col = "blue")
+
+```
+
+#### Question A19 
+
+```{r A19_post_hoc, eval=TRUE, fig.align='center', fig.height=6, fig.width=10, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+# A19
+print("A19:")
+tk.lm <- lm(A19
+            ~ device,
+            data = df_transformed)
+tk.av <- aov(tk.lm)
+
+tukey.test <- TukeyHSD(tk.av)
+tukey.test
+plot(tukey.test, sub="for A19", cex.main=2, cex.lab=1.5, cex.axis=1, col = "blue")
+
+```
+
+#### Question A20 
+
+```{r A20_post_hoc, eval=TRUE, fig.align='center', fig.height=6, fig.width=10, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+# A20
+print("A20:")
+tk.lm <- lm(A20
+            ~ device,
+            data = df_transformed)
+tk.av <- aov(tk.lm)
+
+tukey.test <- TukeyHSD(tk.av)
+tukey.test
+plot(tukey.test, sub="for A20", cex.main=2, cex.lab=1.5, cex.axis=1, col = "blue")
+
+```
+
+****
+
+## Performing the MANOVA and MANCOVA Tests on Sensor Feature Results {.tabset .tabset-fade}
+
+```{r stat_tests_sensor_read, eval=TRUE, fig.align='center', fig.height=12, fig.width=20, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+# reading data from the saved file
+
+load(
+  paste(
+    "~/Desktop/Canada/neuroArm/neuroArmPLUS",
+    "/Smart Handcontroller/Part 2/data/ResultsGenSurvey.RData",
+    sep = ""
+  )
+)
+
+load(
+  paste(
+    "~/Desktop/Canada/neuroArm/neuroArmPLUS",
+    "/Smart Handcontroller/Part 2/data/FeatureGenSensor.RData",
+    sep = ""
+  )
+)
+
+df_transformed <-
+  rbind(
+    cbind(subj_survey[[1]][, 2:7], subj_feature[[1]][, 2:6],
+          device = 'Excalibur'),
+    cbind(subj_survey[[1]][, 2:7], subj_feature[[2]][, 2:6],
+          device = 'Premium'),
+    cbind(subj_survey[[1]][, 2:7], subj_feature[[3]][, 2:6],
+          device = 'Sigma7')
+  )
+
+
+```
+
+In this section, the statistical tests of MANOVA (comparing the subjective performance results considering devices as the factor) and MANCOVA (comparing the subjective performance results considering devices as the factor and the demographic variables as the covariates) were performed on the sensor feature results. The significance codes for differences between devices in these tests are provided below each test result. The hand controllers were significantly different in terms of various sensor feature results. Among them, the arm angle sum (`sum.arm.angle`), force RMS (`sos.force`), and travel distance (`travel.distance`) were the significant features for performance.
+
+
+### MANOVA Test Results {.tabset .tabset-fade}
+
+Overall test summary:
+
+```{r stat_tests_sensor_manova, eval=TRUE, fig.align='center', fig.height=12, fig.width=20, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+# MANOVA test
+res.man <- manova(
+  cbind(
+    travel.distance,
+    number.clutches,
+    sum.gimbal.angle,
+    sum.arm.angle,
+    sos.force
+  ) ~ device,
+  data = df_transformed
+)
+summary(res.man)
+
+```
+
+Summary of the analysis of variance model:
+
+```{r stat_tests_sensor_manova_detail, eval=TRUE, fig.align='center', fig.height=12, fig.width=20, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+# Look to see which differ
+summary.aov(res.man)
+
+```
+
+
+### MANCOVA Test Results {.tabset .tabset-fade}
+
+Overall test summary:
+
+```{r stat_tests_sensor_mancova, echo=TRUE, fig.align='center', fig.height=12, fig.width=20, warning=TRUE, cache=TRUE, out.width="95%"}
+
+# MANCOVA test
+res.manc <- manova(
+  cbind(
+    travel.distance,
+    number.clutches,
+    sum.gimbal.angle,
+    sum.arm.angle,
+    sos.force
+  ) ~ device +
+    train.status + years.cat + age.range.cat + prior.experience.status +
+    videogame.experience.status,
+  data = df_transformed
+)
+summary(res.manc)
+
+```
+
+Summary of the analysis of variance model:
+
+```{r stat_tests_sensor_mancova_detail, eval=TRUE, fig.align='center', fig.height=12, fig.width=20, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+# Look to see which differ
+summary.aov(res.manc)
+
+```
+
+### Post-hoc Tukey's Test for the Pair-wise Differences among the Hand Controllers {.tabset .tabset-fade}
+
+In the snippet below, the post-hoc Tukey's tests were applied on the significant variables obtained in the previous section. The confidence intervals within the family-wise confidence level graphs that does not include zero indicates a significant different between the corresponding pair of hand controllers.
+
+
+#### Travel Distance
+
+```{r travel.distance_post_hoc, eval=TRUE, fig.align='center', fig.height=6, fig.width=10, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+# travel.distance 
+print("travel.distance:")
+tk.lm <- lm(travel.distance 
+            ~ device,
+            data = df_transformed)
+tk.av <- aov(tk.lm)
+
+tukey.test <- TukeyHSD(tk.av)
+tukey.test
+plot(tukey.test, sub="for Travel Distance", cex.main=2, cex.lab=1.5, cex.axis=1, col = "blue")
+
+
+```
+
+#### Number of Clutches
+
+```{r number.clutches_post_hoc, eval=TRUE, fig.align='center', fig.height=6, fig.width=10, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+# number.clutches
+print("number.clutches:")
+tk.lm <- lm(number.clutches
+            ~ device,
+            data = df_transformed)
+tk.av <- aov(tk.lm)
+
+tukey.test <- TukeyHSD(tk.av)
+tukey.test
+plot(tukey.test, sub="for Number of Clutches", cex.main=2, cex.lab=1.5, cex.axis=1, col = "blue")
+
+
+```
+
+#### Force RMS
+
+```{r sos.force_post_hoc, eval=TRUE, fig.align='center', fig.height=6, fig.width=10, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+# sos.force
+print("sos.force:")
+tk.lm <- lm(sos.force
+            ~ device,
+            data = df_transformed)
+tk.av <- aov(tk.lm)
+
+tukey.test <- TukeyHSD(tk.av)
+tukey.test
+plot(tukey.test, sub="for Force RMS", cex.main=2, cex.lab=1.5, cex.axis=1, col = "blue")
+
+
+```
+
+#### Gimbal Angle Sum
+
+```{r sum.gimbal.angle_post_hoc, eval=TRUE, fig.align='center', fig.height=6, fig.width=10, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+# sum.gimbal.angle
+print("sum.gimbal.angle:")
+tk.lm <- lm(sum.gimbal.angle
+            ~ device,
+            data = df_transformed)
+tk.av <- aov(tk.lm)
+
+tukey.test <- TukeyHSD(tk.av)
+tukey.test
+plot(tukey.test, sub="for Gimbal Angle Sum", cex.main=2, cex.lab=1.5, cex.axis=1, col = "blue")
+
+
+```
+
+
+#### Arm Angle Sum
+
+```{r sum.arm.angle_post_hoc, eval=TRUE, fig.align='center', fig.height=6, fig.width=10, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+# sum.arm.angle
+print("sum.arm.angle:")
+tk.lm <- lm(sum.arm.angle
+            ~ device,
+            data = df_transformed)
+tk.av <- aov(tk.lm)
+
+tukey.test <- TukeyHSD(tk.av)
+tukey.test
+plot(tukey.test, sub="for Arm Angle Sum", cex.main=2, cex.lab=1.5, cex.axis=1, col = "blue")
+
+
+```
+
+
+****
+
+## Establishing a Regression Model Between the Subjective and Objective Performance Metrics 
+
+In this section, we tried to establish a relationship between the objective performance metrics derived from the sensor data within the hand controller and the subjective performance measures collected through the survey from users. The goal is to introduce a guideline for finding the influencing factors in the device and managing them to optimize the performance. A Principal Component Analysis (PCA) is needed to identify the highest influencing factors. The positively correlated subjective performance measures and/or the ones showing a significance level ($p-value < 0.05$) of difference between devices were included in the regression model. The measures were selected in a matter that maximizes the significance of the regression model and the Adjusted R-squared value.
+
+### Principal Component Analysis 
+
+The first graph is the scree plot that visualizes eigenvalues and shows the percentage of variances explained by each principal component. In the second graph, positive correlated variables point to the same side of the plot and the negative correlated variables point to opposite sides of the graph. In the third graph the devices with a similar profile are grouped together.
+
+```{r pca, eval=TRUE, fig.align='center', fig.height=6, fig.width=8, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+# reading data from the saved file
+load(
+  paste(
+    "~/Desktop/Canada/neuroArm/neuroArmPLUS",
+    "/Smart Handcontroller/Part 2/data/ResultsGenSurvey.RData",
+    sep = ""
+  )
+)
+
+
+df_transformed <-
+  rbind(
+    cbind(subj_survey[[1]][, 2:7], subj_survey[[2]][, 6:28], device = 'Excalibur'),
+    cbind(subj_survey[[1]][, 2:7], subj_survey[[3]][, 6:28], device = 'Premium'),
+    cbind(subj_survey[[1]][, 2:7], subj_survey[[4]][, 6:28], device = 'Sigma7')
+  )
+
+
+subj_dev <- numeric(length = 90)
+devices <- c('E', 'P', 'S')
+for (j in 1:3) {
+  for (i in 1:30) {
+    subj_dev[30 * (j - 1) + i] <- sprintf("%s %s", devices[j], i)
+  }
+}
+row.names(df_transformed) <- subj_dev
+
+
+res.pca <- prcomp( ~ .,
+                   data = df_transformed[, 7:29],
+                   na.action = na.omit,
+                   scale = TRUE)
+
+# Visualize eigenvalues (scree plot). Show the percentage of variances
+# explained by each principal component
+fviz_eig(res.pca, barcolor = "lightgoldenrod", barfill = "lightgoldenrod", addlabels = TRUE)
+
+
+# Graph of variables. Positive correlated variables point to the same side of the plot.
+# Negative correlated variables point to opposite sides of the graph.
+fviz_pca_var(
+  res.pca,
+  col.var = "contrib",
+  # Color by contributions to the PC
+  gradient.cols = 
+    c("goldenrod1",
+      "gold1",
+      "gold",
+      "lightgoldenrod",
+      "aquamarine2",
+      "aquamarine3",
+      "aquamarine4"
+    ),
+  repel = TRUE     # Avoid text overlapping
+)
+
+# Grouping the variables
+groups <- as.factor(df_transformed$device[1:81])
+fviz_pca_ind(
+  res.pca,
+  col.ind = groups,
+  # color by groups
+  palette = c("mediumaquamarine", "salmon", "cornflowerblue"),
+  addEllipses = TRUE,
+  # Concentration ellipses
+  ellipse.type = "confidence",
+  legend.title = "Groups",
+  repel = TRUE
+)
+
+```
+
+
+### Regression Model Establishment
+
+The results of regression model relating the sensor based performance features to the mean values of subjective metrics are provided below. A combination of considerations based on the significance in the \textit{MANCOVA} test as well as positive correlations and larger contributions in PCA lead us to consider a portion of subjective metrics, i.e. `A1`, `A4`, `A5`, `A6`, `A7`, `A8`, `A9`, `A10`, `A13`, `A14`, `A15`, `A16`, `A17`, and `A18` for the regression analysis.. The coefficients estimate the trends while R-squared represents the scatter around the regression line. The $p-value = 0.0002$ shows the significance of model regardless of the value for R-squared models. Low R-squared values are problematic when precise predictions are needed. However, in this case, our final purpose is to identify the trends leading to the optimized performance in the hand controller. The low levels of R-squared are typical in the models related to human performance because people are fairly unpredictable! Please note that even with low R-squared values, the low $p-value$ in this case still indicate a real relationship between the significant predictors and the response variable.
+
+```{r regression, eval=TRUE, fig.align='center', fig.height=12, fig.width=20, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+# reading data from the saved file
+load(
+  paste(
+    "~/Desktop/Canada/neuroArm/neuroArmPLUS",
+    "/Smart Handcontroller/Part 2/data/ResultsGenSurveyNorm.RData",
+    sep = ""
+  )
+)
+
+load(
+  paste(
+    "~/Desktop/Canada/neuroArm/neuroArmPLUS",
+    "/Smart Handcontroller/Part 2/data/FeatureGenSensorNorm.RData",
+    sep = ""
+  )
+)
+
+df_transformed <-
+  rbind(
+    cbind(subj_survey_norm[[1]][, 2:7], subj_survey_norm[[2]][, 6:28],
+          subj_feature_norm[[1]][, 2:6], device = 'Excalibur'),
+    cbind(subj_survey_norm[[1]][, 2:7], subj_survey_norm[[3]][, 6:28],
+          subj_feature_norm[[2]][, 2:6], device = 'Premium'),
+    cbind(subj_survey_norm[[1]][, 2:7], subj_survey_norm[[4]][, 6:28],
+          subj_feature_norm[[3]][, 2:6], device = 'Sigma7')
+  )
+
+# A4 is important
+mlm1 <- lm(
+  rowMeans(
+    cbind(A1,
+          A4,
+          A5, 
+          A6, 
+          A7, 
+          A8, 
+          A9,
+          A10,
+          A13,
+          A14,
+          A15, 
+          A16, 
+          A17, 
+          A18)
+  ) ~ completion.time.avg +
+    travel.distance + number.clutches + sum.gimbal.angle +
+    sos.force,
+  data = df_transformed
+)
+
+summary(mlm1)
+
+```
+
+The regression model formula is as follows:
+
+$$ Perf_{subj} = 0.76 - 0.01 \ CT - 0.99 \ TD - 0.16 \ NC + 0.6 \ GA_{sum} - 0.77 \ SOSF, $$ 
+
+where $Perf_{subj}$ is the average subjective performance measure, $CT$ is completion time, $TD$ is travel distance (measured from Kuka's end effector), $NC$ is the number of clutches, $GA_{sum}$ is the sum of changes in gimbal angles, and $SOSF$ is the squared root of sum of the squared forces, all associated with the objective performances from device sensors and calculated across the 16 (sub-)task repetitions. 
+
+### Model Optimization
+
+After deriving the regression model equation, the next step would be to optimize the equation in order to identify the value of features contributing to achieve the highest performance of the hand controller as follows:
+
+```{r optimization, eval=TRUE, fig.align='center', fig.height=12, fig.width=20, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+
+f <- function(x) {
+  stopifnot(is.numeric(x))
+  stopifnot(is.finite(x))
+  stopifnot(length(x) == 5)
+  x1 <- x[1]
+  x2 <- x[2]
+  x3 <- x[3]
+  x4 <- x[4]
+  x5 <- x[5]
+  - 1 * (0.76 -
+  (0.01 * x1) -
+  (0.99 * x2) -
+  (0.16 * x3) +
+  (0.6  * x4) -
+  (0.77 * x5))
+}
+
+ftoo <-
+  deriv(
+  expression(-1 * (
+  0.76 -
+  (0.01 * x1) -
+  (0.99 * x2) -
+  (0.16 * x3) +
+  (0.6  * x4) -
+  (0.77 * x5)
+  )),
+  namevec = c("x1", "x2", "x3", "x4", "x5"),
+  function.arg = TRUE
+  )
+
+ftootoo <- function(x) {
+  stopifnot(is.numeric(x))
+  stopifnot(is.finite(x))
+  stopifnot(length(x) == 5)
+  x1 <- x[1]
+  x2 <- x[2]
+  x3 <- x[3]
+  x4 <- x[4]
+  x5 <- x[5]
+  ftoo(x1, x2, x3, x4, x5)
+}
+
+print("Negative of the equation is optimized to get the maximum:")
+      
+optim(c(0.5, 0.5, 0.5, 0.5, 0.5), 
+      f, 
+      function(x) attr(ftootoo(x), "gradient"),
+      method = "BFGS",
+      lower = c(0, 0, 0, 0, 0), 
+      upper = c(1, 1, 1, 1, 1))
+
+
+```
+
+The optimization was performed based on a quasi-Newton method (also known as a variable metric algorithm). This method uses function values and gradients to build up a picture of the surface to be optimized. The results suggest the following values on a scale of 0-1 for obtaining the maximum performance of the hand controller:
+
+\item $CT = 0$
+
+\item $TD = 0$
+
+\item $NC = 0$
+
+\item $GA_{sum} = 1$
+
+\item $SOSF = 0$
+
+****
+
+# Surgeon Skill Prediction
+
+In order to apply a prediction algorithm for identifying the surgeon's skill based on the hand controller performance features, the first step would be to learn the patterns in data through exploration and visualization. In this section, a data visualization is provided to determine the correlation between the pairs of features and distribution of data for each class of *Novice* and *Expert* surgeons.    
+
+```{r read.data.experience.prediction, eval=TRUE, fig.align='center', fig.height=12, fig.width=20, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+# reading data from the saved file
+load(
+  paste(
+    "~/Desktop/Canada/neuroArm/neuroArmPLUS",
+    "/Smart Handcontroller/Part 2/data/ResultsGenSurveyNorm.RData",
+    sep = ""
+  )
+)
+
+load(
+  paste(
+    "~/Desktop/Canada/neuroArm/neuroArmPLUS",
+    "/Smart Handcontroller/Part 2/data/FeatureGenSensorNorm.RData",
+    sep = ""
+  )
+)
+
+
+# find the average of features across 3 devices
+subj_feature_norm_ESP <-
+  (
+    cbind(
+      as.numeric(subj_survey_norm[[2]][, 2]),
+      subj_survey_norm[[2]][, 3],
+      subj_feature_norm[[1]][, 2:5]
+    ) +
+      cbind(
+        as.numeric(subj_survey_norm[[3]][, 2]),
+        subj_survey_norm[[3]][, 3],
+        subj_feature_norm[[2]][, 2:5]
+      ) +
+      cbind(
+        as.numeric(subj_survey_norm[[4]][, 2]),
+        subj_survey_norm[[4]][, 3],
+        subj_feature_norm[[3]][, 2:5]
+      )
+  ) / 3
+experiece.level <- subj_survey_norm[[1]][, 3]
+experiece.level[experiece.level == 1 | experiece.level == 2] <- "Novice"
+experiece.level[experiece.level == 3 | experiece.level == 4] <- "Expert"
+experiece.level[11] <- "Expert"  # assigning the missing value
+
+lr_data <- cbind(subj_feature_norm_ESP, as.character(experiece.level))
+row_names <- experiece.level
+col_names <- c("Completion Time", "Error Count", "Travel Distance", "Number of Clutches", "Force RMS", "Gimbal Angle Sum", "Experience Level")
+colnames(lr_data) <- col_names
+
+# replacing the missing error count with the mean of its group
+lr_data[4, 2] <- mean(lr_data[lr_data[, 7] == "Novice", 2], na.rm = TRUE) 
+
+```
+
+## Feature Data Correlation and Distribution  
+
+The figure below is the box plot of the features indicating the median, maximum, and minimum in data. 
+
+```{r features.box.plot, eval=TRUE, fig.align='center', fig.height=8, fig.width=20, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+par(mfrow = c(1,6))  # number of subgraphs
+par(pin = c(2,5))  # plot areas for graphs
+for (i in 1:6) {
+boxplot(lr_data[, i],
+        main = col_names[i],
+        outline = FALSE,
+        xlab = "Value",
+        cex.main = 3,
+        cex.lab = 2,
+        cex.axis = 2,
+        col = "gold"
+       )
+}
+
+```
+
+The figure below is the histogram, correlation plots, and scatter plots of the features. The distribution of each variable is shown on the diagonal. On the bottom of the diagonal the bivariate scatter plots with a fitted line are displayed. In the scatter plots, the <span style="color:red">red</span> colored circles show Expert and the <span style="color:green">greens</span> show Novice surgeons. The linear fits as well as the correlation ellipses are also provided for the scattered data. On the top of the diagonal the value of the correlation plus the significance level as stars. Each significance level is associated to a symbol: $p-values$ (0, 0.001, 0.01, 0.05, 0.1, 1) corresponds to $symbols$ ($"***"$, $"**"$, $"*"$, $"."$, $" "$). 
+
+```{r features.histogram, eval=TRUE, fig.align='center', fig.height=20, fig.width=20, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+# par(mfrow = c(1,1))
+# par(pin = c(5,10))  # plot areas for graphs
+# col1 <-
+#   colorRampPalette(
+#     c("goldenrod1",
+#       "gold",
+#       "gold1",
+#       "lightgoldenrod1",
+#       "lightgoldenrodyellow",
+#       "aquamarine",
+#       "aquamarine2",
+#       "aquamarine4"
+#       )
+#   )
+# correlations <- cor(lr_data[, -7])
+# res1 <- cor.mtest(correlations, conf.level = .95)
+# corrplot(
+#   correlations,
+#   title = "The Graphical Display of the Features Correlation Matrix",
+#   cex.main = 3,
+#   type = "upper",
+#   order = "hclust", # reordering the fatures based on the correlation cluster
+#   p.mat = res1$p,
+#   sig.level = .2,  # crossed the insignificant value according to the significant level
+#   method = "circle",
+#   col = col1(100),
+#   tl.col = "black",
+#   tl.cex = 2,
+#   cl.cex = 1.5,
+#   mar=c(0,0,5,0)
+# )
+
+
+# The distribution of each variable is shown on the diagonal.
+# On the bottom of the diagonal : 
+# the bivariate scatter plots with a fitted line are displayed
+# On the top of the diagonal : 
+# the value of the correlation plus the significance level as stars
+# Each significance level is associated to a symbol : 
+# p-values(0, 0.001, 0.01, 0.05, 0.1, 1) <=> symbols(“***”, “**”, “*”, “.”, " “)
+pairs.panels(
+  lr_data[, -7],
+  bg = c("firebrick1", "lightgreen")[lr_data$`Experience Level`],
+  hist.col = "lightgoldenrod1",
+  cor = TRUE,
+  method = "pearson",
+  main = "Histograms, Scatter Plots and Correlations of Features",
+  density = TRUE,
+  ellipses = TRUE,
+  stars = TRUE,
+  lm = TRUE,
+  pch = 21,
+  cex = 2,
+  cex.main = 3,
+  cex.cor = 0.5,
+  cex.axis = 2,
+  cex.labels = 2.5,
+  font.labels = 2
+)
+
+
+```
+
+## Feature Density Plots 
+
+The density plots for various features are provided in the figures below. These plots are the visualizations that help for a better observation in the Expert and Novice separation using each feature. This also helps to understand the overlap in the skill for a specific feature. As shown in the figures, this overlap is evident for almost all of the features, making the prediction not a straightforward process based on only one or two features. There seems to be some differences in the mean values of the *Gimbal Angle Sum* as well as the spread of data along the range for *Force RMS*, *Completion Time*, and *Travel Distance*, with a wider distribution (larger dispersion along the range) for the Novice group. Additionally, the *Number of Clutches* and *Error Count* seem to follow a similar pattern with a semi-bimodal distribution for the Novice group. 
+
+```{r feature.dist.plot, eval=TRUE, fig.align='center', fig.height=5, fig.width=9, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+featurePlot(
+  x = lr_data[,-7],
+  y = lr_data[, 7],
+  plot = "density",
+  scales = list(
+    x = list(relation = "free"),
+    y = list(relation = "free")
+  ),
+  par.settings = list(
+    superpose.line = list(col = c("firebrick1", "lightgreen")),
+    strip.background = list(col = "lightgoldenrod1")
+  ),
+  adjust = 1.5,
+  pch = "|",
+  col = c("firebrick1", "lightgreen"),
+  main = "Density Plots of the Surgeon Skill Features",
+  auto.key = list(columns = 3)
+)
+
+
+```
+
+## Building Logistic Regression Model
+
+In this section, a binomial Logistic Regression model is developed after partitioning the data into training and testing sets (70% training and 30% testing). The summary of model is provided as follows where returns the estimate, standard errors, $z-score$, and $p-values$ on each of the coefficients. Although the factors seem to be not significant according to $0.05$ threshold, the model is can be used as this insignificancy is mostly due to the small available sample size and the subjective differences among the individuals in each group of skill.   
+
+```{r logistic.reg.model, fig.align='center', fig.height=5, fig.width=9, warning=FALSE, cache=FALSE, out.width="95%"}
+
+col_names <- c("completion.time", "error.count", "travel.distance", "number.clutches", "sos.force", "sum.gimbal.angle", "experience.level")
+colnames(lr_data) <- col_names
+
+
+## 70% of the sample size
+smp_size <- floor(0.7 * nrow(lr_data))
+
+## set the seed to make your partition reproducible
+set.seed(123)
+train_ind <- sample(seq_len(nrow(lr_data)), size = smp_size)
+# train_ind <- c(1, 2, 3, 4, 6, 7, 8, 9 ,10 ,11, 12, 13, 14, 15, 16, 17, 18, 22, 24, 25, 30)
+
+train <- lr_data[train_ind, ]
+test <- lr_data[-train_ind, ]
+
+glm.fit.1 <-
+  glm(
+    experience.level ~ completion.time +
+      error.count +
+      travel.distance +
+      number.clutches +
+      sos.force +
+      sum.gimbal.angle,
+    data = train,
+    family = binomial
+  )
+
+glm.fit.2 <-
+  glm(
+    experience.level ~ completion.time +
+      error.count +
+      travel.distance +
+      sos.force +
+      sum.gimbal.angle,
+    data = train,
+    family = binomial
+  )
+
+summary(glm.fit.2)
+
+```
+
+### Likelihood Ratio Test 
+
+To show the higher prediction power of the logistic regression model, reducing the number of predictors can be a solution. The significance of having a reduced model was evaluated by the likelihood ratio test, which compares the likelihood of the data in the full model against the reduced model. Considering the amount of overlap in the feature density plots, and following different experimentations, Number of Clutches was removed from the logistic regression model allowing for significant $p-values$ (or close to significant level), i.e. for `sum.gimbal.angle`, `sos.force`, and `travel.distance`. The likelihood test with $p-values$ > 0.05 indicates that the predictor variable removal would not negatively impact the model fitness, i.e. difference between the two models is not statistically significant. Below is the result of the likelihood ratio test showing $p-values$ > 0.05. Thus, it was safe to remove the `number.clutches` from the full model.
+
+```{r logistic.reg.likelihoodratio, fig.align='center', fig.height=5, fig.width=9, warning=FALSE, cache=FALSE, out.width="95%"}
+
+lr.test <- lrtest(glm.fit.1, glm.fit.2) # Likelihood ratio test
+data.matrix(lr.test)
+
+```
+
+### Pseudo $R^{2}$ Determination
+
+In order to assess the performance of logistic regression model regarding the proportion of variance in the dependent variable that is explained by the predictor (similar to ordinary least squares regression), Pseudo $R^{2}$ statistic was calculated. Particularly, McFadden’s $R^{2}$ defined as $1-\frac{ln(LM)}{ln(L0)}$, where $ln(LM)$ and $ln(L0)$ are the log likelihoods of the fitted and null (only intercept presents) models, respectively. The McFadden’s $R^{2}$ value ranges between 0-1, and the values close to 0 attribute to the models with no prediction power. In our case, this value is equal to 0.37, which is acceptable considering the nature of the problem and the available number of data samples.    
+
+```{r logistic.reg.pseudor2, fig.align='center', fig.height=5, fig.width=9, warning=FALSE, cache=FALSE, out.width="95%"}
+
+pR2(glm.fit.2) # Pseudo R^2 - look for McFadden's R2 (0-1) - values close to 0 have no prediction power
+
+```
+
+The regression model formula is as follows:
+
+$$ Skill_{subj} = 5.33 + 3.46 \ CT + 1.47 \ EC + 52.84 \ TD - 42.03 \ SOSF - 72.24 \ GA_{sum}, $$ 
+
+where $Skill_{subj}$ is the weight indicator for the skill group, $CT$ is completion time, $EC$ is error count, $TD$ is travel distance (measured from Kuka's end effector), $SOSF$ is the squared root of sum of the squared forces, and $GA_{sum}$ is the sum of changes in gimbal angles. 
+
+### Skill Prediction using the Logistic Regression Model
+
+The skill prediction for the testing group of surgeons (9 surgeons) considering their performance features is provided below. The prediction is made based on the regression model previously trained on the training set of surgeons (21 surgeons). The results of **5-fold cross-validation** indicate 78% accuracy, 67% sensitivity, and 83% specificity for the skill prediction using their hand controller performance features (two misclassification over the 9 cases). 
+
+```{r logistic.reg.tes, fig.align='center', fig.height=5, fig.width=9, warning=FALSE, cache=FALSE, out.width="95%"}
+
+# 5-fold cross validation
+ctrl <-
+  trainControl(method = "repeatedcv",
+               number = 5,
+               savePredictions = TRUE)
+
+mod_fit <- train(
+  experience.level ~ completion.time +
+    error.count +
+    travel.distance +
+    sos.force +
+    sum.gimbal.angle,
+  data = lr_data,
+  method = "glm",
+  family = "binomial",
+  trControl = ctrl,
+  tuneLength = 5
+)
+
+glm.pred = predict(mod_fit, newdata = test)
+ptable <- confusionMatrix(data = glm.pred, test$experience.level)
+ptable
+
+fourfoldplot(ptable$table,
+             main = "Confusion Matrix")
+
+# # AUC calculation
+# glm.pred.auc = predict(glm.fit.2, newdata = test, type = "response")
+# pred <- prediction(glm.pred.auc, test$experience.level)
+# perf <- performance(pred, measure = "tpr", x.measure = "fpr")
+# plot(perf)
+# auc <- performance(pred, measure = "auc")
+# auc <- auc@y.values[[1]]
+# print(paste0("AUC = ", auc))
+
+
+```
+
+# Conclusions
+
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+These results indicate that a desired device should have a minimum Completion Time, Travel Distance, Number of Clutches, and Force Magnitude. However, a maximum Gimbal Angle Sum will lead to a higher performance. In addition, the higher coefficients associated with $TD$ and $SOSF$ in the regression equation, i.e. -0.99 and 0.76, respectively, shows the higher contribution of travel distance and force magnitude value to the performance of a hand controller. In addition, an algorithm for surgeon skill prediction is provided that can predict the *Novice* and *Expert* surgeons based on their performance in using the hand controllers with 78% accuracy, 66% sensitivity, and 83% specificity. 
+
+
+</div>
+
+
