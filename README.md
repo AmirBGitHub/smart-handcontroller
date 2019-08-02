@@ -1,2 +1,4 @@
 # smart-handcontroller
-Smart hand controller performance analysis for neuroArmPLUS neurosurgery robot
+Smart hand controller performance analysis for neuroArmPLUS neurosurgery robot:
+
+In this document, we attempt to analyze the objective and subjective features aquired from three hand controllers for performance assessment and design modification. The studied hand controllers were: microsurgery-specific Excalibur3DS-I, and two general purpose haptic devices: HD2 and sigma.7. Comparisons were made based on subjective performance measures obtained from questionnaires and objective performance features derived from the sensors in the hand controller. Task completion time, number of errors, number of required clutches, amount and quality of force feedback, and dexterity and maneuverability were among the studies variables. Statistical tests analyzed the performance difference between the hand controllers and regression analysis identified the effective features for future design improvements as well as an automated surgical skill evaluation model for objective training purposes in robot-assisted neurosurgery. The codes are provided in R Markdown platform.
