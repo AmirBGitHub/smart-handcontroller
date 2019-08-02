@@ -1,2 +1,2 @@
-# smarthandcontroller
+# smart-handcontroller
 Smart hand controller performance analysis for neuroArmPLUS neurosurgery robot
