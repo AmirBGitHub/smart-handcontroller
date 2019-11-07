@@ -1,5 +1,5 @@
 ---
-title: "Smart Hand Controller Data Analysis"
+title: "Smart Hand-controller Data Analysis"
 author:  
   - Amir Baghdadi^[Project neuroArm, Department of Clinical Neurosciences, University of Calgary. ]
   - Hamidreza Hoshyarmanesh^[Project neuroArm, Department of Clinical Neurosciences, University of Calgary. ]
@@ -21,7 +21,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-In this document, we attempt to analyze the objective and subjective features aquired from three hand controllers for performance assessment and design modification. The studied hand controllers were: microsurgery-specific Excalibur3DS-I ("**Excalibur**"), and two general purpose haptic devices: HD2 ("**Premium**") and sigma.7 ("**Sigma7**"). A group of 30 participants selected among the experienced surgeons as well as the residents and fellows in the Department of Clinical Neurosciences at the University of Calgary were recruited to perform a peg-in-hole task consisting of cotton strip micromanipulation in a limited workspace, aimed to reflect the maneuvers performed during microsurgery.    
+In this document, we attempt to analyze the objective and subjective features aquired from three hand-controllers for device and surgeon performance assessment. The studied hand-controllers were: microsurgery-specific Excalibur3DS-I ("**Excalibur**"), and two general purpose haptic devices: High Definition and Phantom Premium 3.0 ("**Premium**") and sigma.7 ("**Sigma7**"). A group of 30 participants selected among the experienced surgeons as well as the residents and fellows in the Department of Clinical Neurosciences at the University of Calgary were recruited to perform a peg-in-hole task consisting of cotton strip micromanipulation in a limited workspace, aimed to reflect the maneuvers performed during microsurgery. The multimedia supplementary files for the task and device structure is available at [https://github.com/AmirBGitHub/smart-handcontroller/](https://github.com/AmirBGitHub/smart-handcontroller/).    
 
 The reader can **show** any code chunk by clicking on the *code* button. We chose to make the default for the code hidden since we: (a) wanted to improve the readability of this document; and (b) assumed that the readers will not be interested in reading every code chunk.
 
@@ -73,7 +73,7 @@ p_load(
 
 ```
 
-In the snippet below, we extract the ".mat" files from the hand controllers MATLAB software.
+In the snippet below, we extract the ".mat" files from the hand-controllers MATLAB software.
 
 ```{r load_data, eval=FALSE, cache=TRUE, include=FALSE}
 
@@ -81,7 +81,7 @@ subj_data_survery_trans <-
   read_excel(
     paste(
       "~/Desktop/Canada/neuroArm/",
-      "neuroArmPLUS/Smart Handcontroller/Part 2/Part 2/",
+      "neuroArmPLUS/Smart Handcontroller/Part 2/",
       "data/HC Selected Data.xlsx",
       sep = ""
     ),
@@ -91,7 +91,7 @@ subj_data_survey_main <-
   read_excel(
     paste(
       "~/Desktop/Canada/neuroArm/",
-      "neuroArmPLUS/Smart Handcontroller/Part 2/Part 2/",
+      "neuroArmPLUS/Smart Handcontroller/Part 2/",
       "data/HC Selected Data.xlsx",
       sep = ""
     ),
@@ -136,7 +136,7 @@ name_subjects <-
 name_device <- c("Excalibur", "Premium_Right1", "Sigma7Right")
 abbrv_device <- c("E", "P", "S")
 
-# reading hand controller data
+# reading hand-controller data
 for (i in 1:3) {
   for (j in 1:length(num_subjects)) {
     # Reading the .mat files
@@ -431,27 +431,27 @@ save(
 
 ## Extracting and Managing the Underlined Survey Features {.tabset .tabset-fade}
 
-In this section, the data from survey was extracted and put into **R _dataframe_**. The data include status of being trained (*Training Status*), years of experience as a surgeon (*Year Level Category*) expressed in four levels of 1-3, 4-6, 7-9, and 10 years, age range (*Age Range Category*) expressed in four levels of 18-30, 31-45, 46-60, and >61 years old. Binary level data on prior experience with hand controller (*Prior Experience*) and having the experience of playing video games (*Video Game Experience*) were also included in the survey questions. 
+In this section, the data from survey was extracted and put into **R _dataframe_**. The data include status of being trained (*Training Status*), years of experience as a surgeon (*Year Level Category*) expressed in four levels of 1-3, 4-6, 7-9, and 10 years, age range (*Age Range Category*) expressed in four levels of 18-30, 31-45, 46-60, and >61 years old. Binary level data on prior experience with hand-controller (*Prior Experience*) and having the experience of playing video games (*Video Game Experience*) were also included in the survey questions. 
 
 The questionnaire consisted of 21 questions labeled as A1-A21 with A1-A4 having multiple choice answers and A5-A21 having a selection scale of 0-100 with the increments of 10. The actual questions are as follows:
 
-A1) How is the hand controller's workspace for surgery?
+A1) How is the hand-controller's workspace for surgery?
 
-A2) How was the physical size of the hand controller?
+A2) How was the physical size of the hand-controller?
 
-A3) How was the hand controller's weight?
+A3) How was the hand-controller's weight?
 
 A4) How many times were you unable to orient the tool in your desired direction?
 
-A5) How was the smoothness of motion for the hand controller?
+A5) How was the smoothness of motion for the hand-controller?
 
 A6) How was the smoothness of positioning in 3D space?
 
 A7) How was the smoothness of orienting in 3D space?
 
-A8) How comfortable was the oriention of the hand controller?
+A8) How comfortable was the oriention of the hand-controller?
 
-A9) How confidently could move the hand controller?
+A9) How confidently could move the hand-controller?
 
 A10) How realistic was the force feedback?
 
@@ -459,7 +459,7 @@ A11) How many unexpected forces did you feel from the hand cotroller not matchin
 
 A12) How helpful was the force feedback in accomplishing the task?
 
-A13) Rate the difficulty of positioning the tool tip using the hand controller.
+A13) Rate the difficulty of positioning the tool tip using the hand-controller.
 
 A14) How was the agreement between the tool motion on the screen and your intended movement?  
 
@@ -471,13 +471,13 @@ A17) Rate the difficulty of pitch movement.
 
 A18) Rate the difficulty of yaw movement.
 
-A19) Rate your fatigue level in the upper limb after operating the hand controller.
+A19) Rate your fatigue level in the upper limb after operating the hand-controller.
 
-A20) Rate your fatigue level in the wrist after operating the hand controller.  
+A20) Rate your fatigue level in the wrist after operating the hand-controller.  
 
-A21) Rate the appearance of the hand controller.  
+A21) Rate the appearance of the hand-controller.  
 
-In order to have a consistent visualization, the results of questionnaire were normalized between 0-1 with numbers closer to one showing a better performance. Below are the visualized summary results for the data averaged across the participants and the summary of demographical and experience information. The survey summary results showed that 25 participants selected Excalibur as the superior hand controller, while 2 participants selected Premium and 3 selected Sigma7. The visual results of the participants demographic and experience data presented in the following spider chart show that the participants selecting Excalibur tend to have higher experience and age levels. 
+In order to have a consistent visualization, the results of questionnaire were normalized between 0-1 with numbers closer to one showing a better performance. Below are the visualized summary results for the data averaged across the participants and the summary of demographical and experience information. The survey summary results showed that 25 participants selected Excalibur as the superior hand-controller, while 2 participants selected Premium and 3 selected Sigma7. The visual results of the participants demographic and experience data presented in the following spider chart show that the participants selecting Excalibur tend to have higher experience and age levels. 
 
 ```{r extract_subject_metrics, eval=TRUE, fig.align='center', fig.height=12, fig.width=20, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%", results="hide"}
 # reading data from the saved file
@@ -704,7 +704,7 @@ subj_survey_norm <- list(
              "completion.time.avg"),
     setNames(normalit01(data.frame(
       subj_data_survey_main[5 * c(1:30) - 4, 19])),
-    "error.count"),
+             "error.count"),
     1 - abs(subj_data_survery_trans[3 * c(1:30) - 1, 4:7]
             - t(replicate(30, desire_answers[1:4]))) /
       4,
@@ -756,7 +756,7 @@ sm <-
         "Completion Time Average",
         "Error Count",
         "A1: Ideal Workspace Size",
-        "A2: Ideal Hand Controller Size",
+        "A2: Ideal Hand-controller Size",
         "A3: Ideal Grip Weight",
         "A4: Tool Orienting Easiness",
         "A5: Motion Smoothness",
@@ -775,7 +775,7 @@ sm <-
         "A18: Tool Yaw Easiness",
         "A19: Upper Lim Comfiness",
         "A20: Wrist Comfiness",
-        "A21: Hand Controller Appearance"
+        "A21: Hand-controller Appearance"
       )
     ),
     "question.name"),
@@ -806,8 +806,8 @@ df_transformed <- melt(
                    "Sigma7 Average")
 )
 
-# plot of performance of differenet hand controllers based on survey
-# the plot is colored by the hand controller groupName 'variable'
+# plot of performance of differenet hand-controllers based on survey
+# the plot is colored by the hand-controller groupName 'variable'
 # the results are scaled between 0 and 1 
 ggplot(df_transformed,
        aes(
@@ -820,19 +820,20 @@ ggplot(df_transformed,
   geom_bar(stat = "identity") +
   theme_minimal() +
   geom_text(size = 6, position = position_stack(vjust = 0.5)) +
-  ggtitle(label = "Performance of Differenet Hand Controllers ",
+  ggtitle(label = "Performance of Differenet Hand-controllers ",
           subtitle = "According to the Users from the Survey") +
   labs(
     caption = paste(
       "Note: The normalized summary results of the questionnaire data",
       "averaged across the participants along with\n the completion",
       "time and error count results. The data are scaled between",
-      "0-1. Significant variables according to\n MANOVA tests in Section 2.1 are labeled with '*'."
+      "0-1. Significant variables according to\n MANOVA tests in",
+      "Section 2.1 are labeled with '*'."
     )
   ) +
   xlab("Survey Question") +
   ylab("Normalized Performance") +
-  labs(fill = "Hand Controller") +
+  labs(fill = "Hand-controller") +
   geom_text(x=1, y=1.3, label="*", size = 10) +
   geom_text(x=2, y=0.7, label="*", size = 10) +
   geom_text(x=3, y=2.6, label="*", size = 10) +
@@ -914,7 +915,7 @@ ggplot(df_transformed,
 
 ############################################################################
 
-# plot of subject demographics vs. performance of differenet hand controllers
+# plot of subject demographics vs. performance of differenet Hand-controllers
 # mean value of performance question results for each subject
 qm <- cbind(
   setNames(data.frame(c(1:30)), "subject.num"),
@@ -1030,14 +1031,13 @@ save(subj_survey_norm,survery_results_E,survery_results_P,survery_results_S,
 
 ```
 
-
 ****
 
 ## Extracting and Managing the Underlined Sensor Features used in User Performace Metrics {.tabset .tabset-fade}
 
-Following the summary results for the questionnaire, the direct data from the sensors and hand controllers are extracted and presented in this section. A header snapshot of the raw data are presented showing 6 rows starting from row 5000 for one of the participants. The recorded raw data included time in seconds, tool tip position, force feedback, gimbal and arm angles derived through Denavit–Hartenberg parameters all presented in x, y, and z axes, pinch value, pedal usage, and the number of clutch usage. The experiment trials were repeated 4 times with 4 peg-in-hole tasks within each trial forming a total of 16 experiment trials.    
+Following the summary results for the questionnaire, the direct data from the sensors and hand-controllers are extracted and presented in this section. A header snapshot of the raw data are presented showing 6 rows starting from row 5000 for one of the participants. The recorded raw data included time in seconds, tool tip position, force feedback, gimbal and arm angles derived through Denavit–Hartenberg parameters all presented in x, y, and z axes, pinch value, pedal usage, and the number of clutch usage. The experiment trials were repeated 4 times with 4 peg-in-hole tasks within each trial forming a total of 16 experiment trials.    
 
-The recorded data were converted to the features associated with the hand controller users introduced in Hoshyarmanesh et al. 2019, being the sum of arm angles in the hand controller (*Arm Angle Sum*), time to complete the task (*Completion Time*), the root mean squared of force feed back (*Force RMS*), the sum of gimbal angles in the hand controller (*Gimbal Angle Sum*), the number of clutch use during the task (*Number of Clutches*), and the path length at the hand controller gripper to accomplish the task (*Travel Distance*). **Please note that for *Force RMS* and *Travel Distance* the data from slave robot end effector (*Kuka*) was utilized rather than the hand controller itself.** The calculated features were summarized for each participant by finding the average across the 16 task trials. In order to be consistent with the questionnaire data and for the sake simplicity in our comparisons, the extracted features were normalized between 0-1. Below are the visualized summary results for the data averaged across the participants. 
+The recorded data were converted to the features associated with the hand-controller users introduced in Hoshyarmanesh et al. 2019, being the sum of arm angles in the hand-controller (*Arm Angle Sum*), time to complete the task (*Completion Time*), the root mean squared of force feed back (*Force RMS*), the sum of gimbal angles in the hand-controller (*Gimbal Angle Sum*), the number of clutch use during the task (*Number of Clutches*), and the path length at the hand-controller gripper to accomplish the task (*Travel Distance*). **Please note that for *Force RMS* and *Travel Distance* the data from slave robot end effector (*Kuka*) was utilized rather than the hand-controller itself.** The calculated features were summarized for each participant by finding the average across the 16 task trials. In order to be consistent with the questionnaire data and for the sake simplicity in our comparisons, the extracted features were normalized between 0-1. Below are the visualized summary results for the data averaged across the participants. 
 
 ```{r extract_performance_metrics, echo=TRUE, fig.align='center', fig.height=12, fig.width=20, warning=FALSE, cache=TRUE, out.width="95%"}
 
@@ -1329,13 +1329,13 @@ sm <-
     ),
     "feature.name"),
     setNames(data.frame(zapsmall(
-      colMeans(data.matrix(subj_feature_norm[[1]])[, 2:6], na.rm = TRUE), digits = 4
+      colMeans(data.matrix(subj_feature_norm[[1]])[, 3:7], na.rm = TRUE), digits = 4
     )), "Excalibur Average"),
     setNames(data.frame(zapsmall(
-      colMeans(data.matrix(subj_feature_norm[[2]])[, 2:6], na.rm = TRUE), digits = 4
+      colMeans(data.matrix(subj_feature_norm[[2]])[, 3:7], na.rm = TRUE), digits = 4
     )), "Premium Average"),
     setNames(data.frame(zapsmall(
-      colMeans(data.matrix(subj_feature_norm[[3]])[, 2:6], na.rm = TRUE), digits = 4
+      colMeans(data.matrix(subj_feature_norm[[3]])[, 3:7], na.rm = TRUE), digits = 4
     )), "Sigma7 Average")
   )
 
@@ -1348,8 +1348,8 @@ df_transformed <- melt(
                    "Sigma7 Average")
 )
 
-# plot of performance of differenet hand controllers based on sensor
-# the plot is colored by the hand controller groupName 'variable'
+# plot of performance of differenet hand-controllers based on sensor
+# the plot is colored by the hand-controller groupName 'variable'
 # the results are scaled between 0 and 1
 ggplot(df_transformed,
        aes(
@@ -1365,7 +1365,7 @@ ggplot(df_transformed,
   geom_bar(stat = "identity") +
   theme_minimal() +
   geom_text(size = 6, position = position_stack(vjust = 0.5)) +
-  ggtitle(label = "Features used in Performance Metrics for Differenet Hand Controllers ",
+  ggtitle(label = "Performance Features for Differenet Hand-controllers ",
           subtitle = "According to the Users from the Sensor Data") +
   annotate('text', x = 3, y = 1.6, 
         label = "The~data~are~scaled~between~0~and~1~
@@ -1377,14 +1377,14 @@ ggplot(df_transformed,
   labs(
     caption = paste(
       "Note: The normalized summary results of the performance features",
-      "from the recorded data by the hand controller\n averaged across",
+      "from the recorded data by the hand-controller\n averaged across",
       "the participants. Please note that the arm angle data was not recorded by Sigma7.",
       "Significant\n variables according to MANOVA tests in Section 2.2 are labeled with '*'."
     )
   ) +
   xlab("Feature from Sensor Data") +
   ylab("Normalized Feature") +
-  labs(fill = "Hand Controller") +
+  labs(fill = "Hand-controller") +
   theme(
     plot.title = element_text(
       size = 36,
@@ -1452,16 +1452,13 @@ ggplot(df_transformed,
   )
 
 
-
-
 ```
-
 
 ****
 
 ## Calculating the User Performance Metrics {.tabset .tabset-fade}
 
-In this section, the performance metrics as defined in Hoshyarmanesh et al. 2019 were calculated based on the features derived in the previous section. The performance metrics included the hand controller maneuverability expressed in terms of the level of angular movement over time (*Performance (angular maneuver)*), time to finish the task (*Performance (completion time)*), the force exerted over the path length of the trajectory (*Performance (force over distance)*), the number of clutch use during the task (*Performance (number of clutches)*), and the path length of the overall trajectory (*Performance (travel distance)*). 
+In this section, the performance metrics as defined in Hoshyarmanesh et al. 2019 were calculated based on the features derived in the previous section. The performance metrics included the hand-controller maneuverability expressed in terms of the level of angular movement over time (*Performance (angular maneuver)*), time to finish the task (*Performance (completion time)*), the force exerted over the path length of the trajectory (*Performance (force over distance)*), the number of clutch use during the task {(*Performance (number of clutches)*), and the path length of the overall trajectory (*Performance (travel distance)*). 
 
 For the similar reasons mentioned above, the calculated performance metrics were scaled between 0-1. Below are the visualized summary results for the performance metrics data averaged across the participants. **In this figure, the values closer to 1 indicate a better performance.**
 
@@ -1552,8 +1549,8 @@ df_transformed <- melt(
                    "Sigma7 Average")
 )
 
-# plot of performance of differenet hand controllers based on sensor
-# the plot is colored by the hand controller groupName 'variable'
+# plot of performance of differenet hand-controllers based on sensor
+# the plot is colored by the hand-controller groupName 'variable'
 # the results are normalized between 0 and 1 (1 showing the best performance)
 ggplot(df_transformed,
        aes(
@@ -1566,7 +1563,7 @@ ggplot(df_transformed,
   geom_bar(stat = "identity") +
   theme_minimal() +
   geom_text(size = 6, position = position_stack(vjust = 0.5)) +
-  ggtitle(label = "Comparison of Performance Metrics for Differenet Hand Controllers ",
+  ggtitle(label = "Comparison of Performance Metrics for Differenet Hand-controllers ",
           subtitle = "According to the Users from the Sensor Data") +
   annotate('text', x = 3, y = 1.8, 
         label = "The~data~are~scaled~between~0~and~1~
@@ -1583,7 +1580,7 @@ ggplot(df_transformed,
   ) +
   xlab("Performance Metric from Sensor Data") +
   ylab("Normalized Performace Level") +
-  labs(fill = "Hand Controller") +
+  labs(fill = "Hand-controller") +
   theme(
     plot.title = element_text(
       size = 36,
@@ -1669,9 +1666,103 @@ save(
 
 ## Sub-task Performance Breakdowns {.tabset .tabset-fade}
 
-The following section provides the pirateplots of the breakdowns for the peg-in-hole subtasks with 4 different **peg** shapes. The results for scaled *Completion Time*, *Travel Distance*, and the *Number of Clutches* are shown across the 3 different hand controllers. While the average value of features differ for different hand controllers, the pattern of change in the features for each peg is consistent among different devices. Surprisingly, this pattern is ascending for the *Completion Time* meaning that the shape of peg has a larger effect on the time rather than being accustomed to the task. In addition, the results indicate a higher values of *Travel Distance* for Peg 2 as well as the *Number of Clutches* (except for Sigma7 which is slightly lower that Peg 3). The easiest peg was found to be Peg 1 according to all three features.
+We also provide the breakdowns of the 4 trials of peg-in-hole task for *Completion Time* as well as subtasks with 4 different **peg** shapes. The results for *Completion Time* , *Travel Distance*, and the *Number of Clutches* are shown across the 3 different hand-controllers. The pattern for *Completion Time*  is decreasing through the first 3 trials for Premium and Sigma7, while increasing in the last trial. However, this pattern is decreasing across the 4 trials of Excalibur (with a minor increase in the 2nd trial) showing an improvement through the course of experiment. On the other hand, while the average value of features differ for different hand-controllers, the pattern of change in the features for each subtask of peg manipulation is consistent among different devices. Surprisingly, this pattern is ascending for the *Completion Time*  meaning that the shape of peg has a larger effect on the time rather than being accustomed to the task. In addition, the results indicate a higher values of *Travel Distance* for Peg 2 as well as the *Number of Clutches*. The easiest peg was found to be Peg 1 according to all three features.
+
+We anticipated a learning curve both over the four trials and between the three hand-controllers. Although we observed a tendency towards improvement in trial time over the course of the experiments per user, mean fourth trial time was slower than mean third for Premium and Sigma7. During the experiments it was noted that users became more comfortable with the task and therefore faster. However, by the fourth trial users may have experienced muscle and mental fatigue and therefore, less precise in their movements and a slower time to complete the task ([Slack et al. 2008](https://publishing.rcseng.ac.uk/doi/abs/10.1308/003588408X321710)). Surprisingly, this pattern showed an improvement among the users for Excalibur that can be attributed to its specific tool design and higher maneuverability which imposes minimal fatigue in such a precise task. The second explanation for the slower fourth time in other hand-controllers may relate to the board design. The subtask completion time breakdowns showed an ascending trend from the first peg to the last peg. The first peg exhibited the fastest task completion time in spite of being the first task, and this is likely because the first peg only required 30 degrees of tool roll, while the subsequent pegs required up to 120 degrees of tool roll. Therefore, the nature of each specific task may plays an important role in the user performance. Moving the pegs from the angled surface to the flat surface was easier than moving the pegs in the opposite direction. It is conceivably more difficult to simultaneously orient a peg at an angle in both the pitch and roll orientations, than when maneuvering in only one dimension. 
 
 ```{r subtask.breakdown.data, eval=TRUE, fig.align='center', fig.height=6, fig.width=8, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+# reading data from the saved file
+load(
+  paste(
+    "~/Desktop/Canada/neuroArm/neuroArmPLUS",
+    "/Smart Handcontroller/Part 2/data/ResultsGenSurvey.RData",
+    sep = ""
+  )
+)
+
+load(
+  paste(
+    "~/Desktop/Canada/neuroArm/neuroArmPLUS",
+    "/Smart Handcontroller/Part 2/data/FeatureGenSensor.RData",
+    sep = ""
+  )
+)
+
+
+CT_task <- rbind(cbind(setNames(data.frame(rep(c(1:30), 4)), "user"),
+                  setNames(data.frame(rep("Excalibur", 120)), "Device"),
+                  setNames(data.frame(c(rep("1", 30), rep("2", 30), rep("3", 30), rep("4", 30))), "Peg"),
+                  setNames(data.frame(c(rowMeans(completion_time[, c(1, 5, 9, 13), 1], na.rm = TRUE),
+                                        rowMeans(completion_time[, c(2, 6, 10, 14), 1], na.rm = TRUE),
+                                        rowMeans(completion_time[, c(3, 7, 11, 15), 1], na.rm = TRUE),
+                                        rowMeans(completion_time[, c(4, 8, 12, 16), 1], na.rm = TRUE))), "completion.time")),
+            cbind(setNames(data.frame(rep(c(1:30), 4)), "user"),
+                  setNames(data.frame(rep("Premium", 120)), "Device"),
+                  setNames(data.frame(c(rep("1", 30), rep("2", 30), rep("3", 30), rep("4", 30))), "Peg"),
+                  setNames(data.frame(c(rowMeans(completion_time[, c(1, 5, 9, 13), 2], na.rm = TRUE),
+                                        rowMeans(completion_time[, c(2, 6, 10, 14), 2], na.rm = TRUE),
+                                        rowMeans(completion_time[, c(3, 7, 11, 15), 2], na.rm = TRUE),
+                                        rowMeans(completion_time[, c(4, 8, 12, 16), 2], na.rm = TRUE))), "completion.time")),
+            cbind(setNames(data.frame(rep(c(1:30), 4)), "user"),
+                  setNames(data.frame(rep("Sigma7", 120)), "Device"),
+                  setNames(data.frame(c(rep("1", 30), rep("2", 30), rep("3", 30), rep("4", 30))), "Peg"),
+                  setNames(data.frame(c(rowMeans(completion_time[, c(1, 5, 9, 13), 3], na.rm = TRUE),
+                                        rowMeans(completion_time[, c(2, 6, 10, 14), 3], na.rm = TRUE),
+                                        rowMeans(completion_time[, c(3, 7, 11, 15), 3], na.rm = TRUE),
+                                        rowMeans(completion_time[, c(4, 8, 12, 16), 3], na.rm = TRUE))), "completion.time"))
+          )
+
+
+
+TD <- rbind(cbind(setNames(data.frame(rep(c(1:30), 4)), "user"),
+                  setNames(data.frame(rep("Excalibur", 120)), "Device"),
+                  setNames(data.frame(c(rep("1", 30), rep("2", 30), rep("3", 30), rep("4", 30))), "Peg"),
+                  setNames(data.frame(c(rowMeans(travel_distance[, c(1, 5, 9, 13), 1], na.rm = TRUE),
+                                        rowMeans(travel_distance[, c(2, 6, 10, 14), 1], na.rm = TRUE),
+                                        rowMeans(travel_distance[, c(3, 7, 11, 15), 1], na.rm = TRUE),
+                                        rowMeans(travel_distance[, c(4, 8, 12, 16), 1], na.rm = TRUE))), "travel.distance")),
+            cbind(setNames(data.frame(rep(c(1:30), 4)), "user"),
+                  setNames(data.frame(rep("Premium", 120)), "Device"),
+                  setNames(data.frame(c(rep("1", 30), rep("2", 30), rep("3", 30), rep("4", 30))), "Peg"),
+                  setNames(data.frame(c(rowMeans(travel_distance[, c(1, 5, 9, 13), 2], na.rm = TRUE),
+                                        rowMeans(travel_distance[, c(2, 6, 10, 14), 2], na.rm = TRUE),
+                                        rowMeans(travel_distance[, c(3, 7, 11, 15), 2], na.rm = TRUE),
+                                        rowMeans(travel_distance[, c(4, 8, 12, 16), 2], na.rm = TRUE))), "travel.distance")),
+            cbind(setNames(data.frame(rep(c(1:30), 4)), "user"),
+                  setNames(data.frame(rep("Sigma7", 120)), "Device"),
+                  setNames(data.frame(c(rep("1", 30), rep("2", 30), rep("3", 30), rep("4", 30))), "Peg"),
+                  setNames(data.frame(c(rowMeans(travel_distance[, c(1, 5, 9, 13), 3], na.rm = TRUE),
+                                        rowMeans(travel_distance[, c(2, 6, 10, 14), 3], na.rm = TRUE),
+                                        rowMeans(travel_distance[, c(3, 7, 11, 15), 3], na.rm = TRUE),
+                                        rowMeans(travel_distance[, c(4, 8, 12, 16), 3], na.rm = TRUE))), "travel.distance"))
+          )
+
+
+NC <- rbind(cbind(setNames(data.frame(rep(c(1:30), 4)), "user"),
+                  setNames(data.frame(rep("Excalibur", 120)), "Device"),
+                  setNames(data.frame(c(rep("1", 30), rep("2", 30), rep("3", 30), rep("4", 30))), "Peg"),
+                  setNames(data.frame(c(rowMeans(num_clutches[, c(1, 5, 9, 13), 1], na.rm = TRUE),
+                                        rowMeans(num_clutches[, c(2, 6, 10, 14), 1], na.rm = TRUE),
+                                        rowMeans(num_clutches[, c(3, 7, 11, 15), 1], na.rm = TRUE),
+                                        rowMeans(num_clutches[, c(4, 8, 12, 16), 1], na.rm = TRUE))), "number.clutches")),
+            cbind(setNames(data.frame(rep(c(1:30), 4)), "user"),
+                  setNames(data.frame(rep("Premium", 120)), "Device"),
+                  setNames(data.frame(c(rep("1", 30), rep("2", 30), rep("3", 30), rep("4", 30))), "Peg"),
+                  setNames(data.frame(c(rowMeans(num_clutches[, c(1, 5, 9, 13), 2], na.rm = TRUE),
+                                        rowMeans(num_clutches[, c(2, 6, 10, 14), 2], na.rm = TRUE),
+                                        rowMeans(num_clutches[, c(3, 7, 11, 15), 2], na.rm = TRUE),
+                                        rowMeans(num_clutches[, c(4, 8, 12, 16), 2], na.rm = TRUE))), "number.clutches")),
+            cbind(setNames(data.frame(rep(c(1:30), 4)), "user"),
+                  setNames(data.frame(rep("Sigma7", 120)), "Device"),
+                  setNames(data.frame(c(rep("1", 30), rep("2", 30), rep("3", 30), rep("4", 30))), "Peg"),
+                  setNames(data.frame(c(rowMeans(num_clutches[, c(1, 5, 9, 13), 3], na.rm = TRUE),
+                                        rowMeans(num_clutches[, c(2, 6, 10, 14), 3], na.rm = TRUE),
+                                        rowMeans(num_clutches[, c(3, 7, 11, 15), 3], na.rm = TRUE),
+                                        rowMeans(num_clutches[, c(4, 8, 12, 16), 3], na.rm = TRUE))), "number.clutches"))
+          )
+
+##############################################################
 
 # reading data from the saved file
 load(
@@ -1682,98 +1773,66 @@ load(
   )
 )
 
-load(
-  paste(
-    "~/Desktop/Canada/neuroArm/neuroArmPLUS",
-    "/Smart Handcontroller/Part 2/data/FeatureGenSensorNorm.RData",
-    sep = ""
-  )
-)
 
 
-CT <- rbind(cbind(setNames(data.frame(rep(c(1:30), 4)), "user"),
+CT_trial <- rbind(cbind(setNames(data.frame(rep(c(1:30), 4)), "user"),
                   setNames(data.frame(rep("Excalibur", 120)), "Device"),
-                  setNames(data.frame(c(rep("1", 30), rep("2", 30), rep("3", 30), rep("4", 30))), "Peg"),
-                  setNames(data.frame(c(rowMeans(completion_time_norm[, c(1, 5, 9, 13), 1], na.rm = TRUE),
-                                        rowMeans(completion_time_norm[, c(2, 6, 10, 14), 1], na.rm = TRUE),
-                                        rowMeans(completion_time_norm[, c(3, 7, 11, 15), 1], na.rm = TRUE),
-                                        rowMeans(completion_time_norm[, c(4, 8, 12, 16), 1], na.rm = TRUE))), "completion.time")),
-            cbind(setNames(data.frame(rep(c(1:30), 4)), "user"),
+                  setNames(data.frame(c(rep("1", 30), rep("2", 30), rep("3", 30), rep("4", 30))), "Trial"),
+                  setNames(data.frame(c(subj_survey[[2]]$completion.time.brk.1,
+                                        subj_survey[[2]]$completion.time.brk.2,
+                                        subj_survey[[2]]$completion.time.brk.3,
+                                        subj_survey[[2]]$completion.time.brk.4)), "completion.time")),
+                  cbind(setNames(data.frame(rep(c(1:30), 4)), "user"),
                   setNames(data.frame(rep("Premium", 120)), "Device"),
-                  setNames(data.frame(c(rep("1", 30), rep("2", 30), rep("3", 30), rep("4", 30))), "Peg"),
-                  setNames(data.frame(c(rowMeans(completion_time_norm[, c(1, 5, 9, 13), 2], na.rm = TRUE),
-                                        rowMeans(completion_time_norm[, c(2, 6, 10, 14), 2], na.rm = TRUE),
-                                        rowMeans(completion_time_norm[, c(3, 7, 11, 15), 2], na.rm = TRUE),
-                                        rowMeans(completion_time_norm[, c(4, 8, 12, 16), 2], na.rm = TRUE))), "completion.time")),
+                  setNames(data.frame(c(rep("1", 30), rep("2", 30), rep("3", 30), rep("4", 30))), "Trial"),
+                  setNames(data.frame(c(subj_survey[[3]]$completion.time.brk.1,
+                                        subj_survey[[3]]$completion.time.brk.2,
+                                        subj_survey[[3]]$completion.time.brk.3,
+                                        subj_survey[[3]]$completion.time.brk.4)), "completion.time")), 
             cbind(setNames(data.frame(rep(c(1:30), 4)), "user"),
                   setNames(data.frame(rep("Sigma7", 120)), "Device"),
-                  setNames(data.frame(c(rep("1", 30), rep("2", 30), rep("3", 30), rep("4", 30))), "Peg"),
-                  setNames(data.frame(c(rowMeans(completion_time_norm[, c(1, 5, 9, 13), 3], na.rm = TRUE),
-                                        rowMeans(completion_time_norm[, c(2, 6, 10, 14), 3], na.rm = TRUE),
-                                        rowMeans(completion_time_norm[, c(3, 7, 11, 15), 3], na.rm = TRUE),
-                                        rowMeans(completion_time_norm[, c(4, 8, 12, 16), 3], na.rm = TRUE))), "completion.time"))
-          )
-
-
-
-TD <- rbind(cbind(setNames(data.frame(rep(c(1:30), 4)), "user"),
-                  setNames(data.frame(rep("Excalibur", 120)), "Device"),
-                  setNames(data.frame(c(rep("1", 30), rep("2", 30), rep("3", 30), rep("4", 30))), "Peg"),
-                  setNames(data.frame(c(rowMeans(travel_distance_norm[, c(1, 5, 9, 13), 1], na.rm = TRUE),
-                                        rowMeans(travel_distance_norm[, c(2, 6, 10, 14), 1], na.rm = TRUE),
-                                        rowMeans(travel_distance_norm[, c(3, 7, 11, 15), 1], na.rm = TRUE),
-                                        rowMeans(travel_distance_norm[, c(4, 8, 12, 16), 1], na.rm = TRUE))), "travel.distance")),
-            cbind(setNames(data.frame(rep(c(1:30), 4)), "user"),
-                  setNames(data.frame(rep("Premium", 120)), "Device"),
-                  setNames(data.frame(c(rep("1", 30), rep("2", 30), rep("3", 30), rep("4", 30))), "Peg"),
-                  setNames(data.frame(c(rowMeans(travel_distance_norm[, c(1, 5, 9, 13), 2], na.rm = TRUE),
-                                        rowMeans(travel_distance_norm[, c(2, 6, 10, 14), 2], na.rm = TRUE),
-                                        rowMeans(travel_distance_norm[, c(3, 7, 11, 15), 2], na.rm = TRUE),
-                                        rowMeans(travel_distance_norm[, c(4, 8, 12, 16), 2], na.rm = TRUE))), "travel.distance")),
-            cbind(setNames(data.frame(rep(c(1:30), 4)), "user"),
-                  setNames(data.frame(rep("Sigma7", 120)), "Device"),
-                  setNames(data.frame(c(rep("1", 30), rep("2", 30), rep("3", 30), rep("4", 30))), "Peg"),
-                  setNames(data.frame(c(rowMeans(travel_distance_norm[, c(1, 5, 9, 13), 3], na.rm = TRUE),
-                                        rowMeans(travel_distance_norm[, c(2, 6, 10, 14), 3], na.rm = TRUE),
-                                        rowMeans(travel_distance_norm[, c(3, 7, 11, 15), 3], na.rm = TRUE),
-                                        rowMeans(travel_distance_norm[, c(4, 8, 12, 16), 3], na.rm = TRUE))), "travel.distance"))
-          )
-
-
-NC <- rbind(cbind(setNames(data.frame(rep(c(1:30), 4)), "user"),
-                  setNames(data.frame(rep("Excalibur", 120)), "Device"),
-                  setNames(data.frame(c(rep("1", 30), rep("2", 30), rep("3", 30), rep("4", 30))), "Peg"),
-                  setNames(data.frame(c(rowMeans(num_clutches_norm[, c(1, 5, 9, 13), 1], na.rm = TRUE),
-                                        rowMeans(num_clutches_norm[, c(2, 6, 10, 14), 1], na.rm = TRUE),
-                                        rowMeans(num_clutches_norm[, c(3, 7, 11, 15), 1], na.rm = TRUE),
-                                        rowMeans(num_clutches_norm[, c(4, 8, 12, 16), 1], na.rm = TRUE))), "number.clutches")),
-            cbind(setNames(data.frame(rep(c(1:30), 4)), "user"),
-                  setNames(data.frame(rep("Premium", 120)), "Device"),
-                  setNames(data.frame(c(rep("1", 30), rep("2", 30), rep("3", 30), rep("4", 30))), "Peg"),
-                  setNames(data.frame(c(rowMeans(num_clutches_norm[, c(1, 5, 9, 13), 2], na.rm = TRUE),
-                                        rowMeans(num_clutches_norm[, c(2, 6, 10, 14), 2], na.rm = TRUE),
-                                        rowMeans(num_clutches_norm[, c(3, 7, 11, 15), 2], na.rm = TRUE),
-                                        rowMeans(num_clutches_norm[, c(4, 8, 12, 16), 2], na.rm = TRUE))), "number.clutches")),
-            cbind(setNames(data.frame(rep(c(1:30), 4)), "user"),
-                  setNames(data.frame(rep("Sigma7", 120)), "Device"),
-                  setNames(data.frame(c(rep("1", 30), rep("2", 30), rep("3", 30), rep("4", 30))), "Peg"),
-                  setNames(data.frame(c(rowMeans(num_clutches_norm[, c(1, 5, 9, 13), 3], na.rm = TRUE),
-                                        rowMeans(num_clutches_norm[, c(2, 6, 10, 14), 3], na.rm = TRUE),
-                                        rowMeans(num_clutches_norm[, c(3, 7, 11, 15), 3], na.rm = TRUE),
-                                        rowMeans(num_clutches_norm[, c(4, 8, 12, 16), 3], na.rm = TRUE))), "number.clutches"))
+                  setNames(data.frame(c(rep("1", 30), rep("2", 30), rep("3", 30), rep("4", 30))), "Trial"),
+                  setNames(data.frame(c(subj_survey[[4]]$completion.time.brk.1,
+                                        subj_survey[[4]]$completion.time.brk.2,
+                                        subj_survey[[4]]$completion.time.brk.3,
+                                        subj_survey[[4]]$completion.time.brk.4)), "completion.time")) 
           )
 
 ```
 
-### Completion Time
+### Completion Time (per trial)
+
+```{r subtrial.breakdown.ct, eval=TRUE, fig.align='center', fig.height=6, fig.width=8, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
+
+pirateplot(
+  formula = completion.time ~ Trial + Device,
+  data = CT_trial,
+  main = "Pirateplots of Completion Time Breakdown over Different Trials",
+  ylab = "Completion Time (minutes - based on manual recordings)",
+  theme = 2,
+  pal = "pony",
+  inf.f.o = .6,
+  inf.disp = "bean",
+  point.o = .3,   
+  # Turn up points
+  bean.b.o = .4,
+  # Turn down bean borders
+  quant = c(.1, .9),
+  # 10th and 90th quantiles
+  quant.col = "black" # Black quantile lines
+) 
+
+```
+
+### Completion Time (per peg)
 
 ```{r subtask.breakdown.ct, eval=TRUE, fig.align='center', fig.height=6, fig.width=8, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
 
 pirateplot(
-  formula = completion.time ~ Peg + Device,
-  data = CT,
+  formula = completion.time/60 ~ Peg + Device,
+  data = CT_task,
   main = "Pirateplots of Completion Time Breakdown over Different Subtasks",
-  ylab = "Completion Time (based on sensor data)",
+  ylab = "Completion Time (minutes - based on sensor data)",
   theme = 2,
   pal = "pony",
   inf.f.o = .6,
@@ -1797,7 +1856,7 @@ pirateplot(
   formula = travel.distance ~ Peg + Device,
   data = TD,
   main = "Pirateplots of Travel Distance Breakdown over Different Subtasks",
-  ylab = "Travel Distance",
+  ylab = "Travel Distance (cm)",
   theme = 2,
   pal = "pony",
   inf.f.o = .6,
@@ -1835,9 +1894,7 @@ pirateplot(
   quant.col = "black" # Black quantile lines
 ) 
 
-
 ```
-
 
 ****
 
@@ -1868,9 +1925,7 @@ df_transformed <-
 
 ```
 
-In this section, the statistical tests of MANOVA (comparing the subjective performance results considering devices as the factor) and MANCOVA (comparing the subjective performance results considering devices as the factor and the demographic variables as the covariates) were performed on the survey results. Repeated measures ANOVA was not utilized here since the comparisons between the response variables (each question or feature) is not of interest, rather the effects of observed factor (different hand controllers) on the multivariate responses is important (Friedrich et al. 2018). The significance codes for differences between devices in these tests are provided below each test result. The hand controllers were significantly different in terms of various survey subjective results. Among them, the completion time (`completion.time.avg`), error count (`error.count`), the workspace (`A1`), the weight (`A3`), orientation smoothness and comfiness (`A7` and `A8`), unexpected force feedback (`A11`), and wrist and upper arm fatigue level (`A19` and `A20`) were the most significant responses. Additionally, Year Level Category (`years.cat`) and Video Game Experience (`videogame.experience.status`) were the significant covariates.
-
-
+In this section, the statistical tests of MANOVA (comparing the subjective performance results considering devices as the factor) and MANCOVA (comparing the subjective performance results considering devices as the factor and the demographic variables as the covariates) were performed on the survey results. Repeated measures ANOVA was not utilized here since the comparisons between the response variables (each question or feature) is not of interest, rather the effects of observed factor (different hand-controllers) on the multivariate responses is important ([Friedrich et al. 2018](https://arxiv.org/abs/1801.08002)). The significance codes for differences between devices in these tests are provided below each test result. The hand-controllers were significantly different in terms of various survey subjective results. Among them, the completion time (`completion.time.avg`), error count (`error.count`), the workspace (`A1`), the weight (`A3`), orientation smoothness and comfiness (`A7` and `A8`), unexpected force feedback (`A11`), and wrist and upper arm fatigue level (`A19` and `A20`) were the most significant responses. Additionally, Year Level Category (`years.cat`) and Video Game Experience (`videogame.experience.status`) were the significant covariates.
 
 ### MANOVA Test Results {.tabset .tabset-fade}
 
@@ -1973,9 +2028,9 @@ summary.aov(res.manc)
 
 ```
 
-### Post-hoc Tukey's Test for the Pair-wise Differences among the Hand Controllers {.tabset .tabset-fade}
+### Post-hoc Tukey's Test for the Pair-wise Differences among the Hand-controllers {.tabset .tabset-fade}
 
-In the snippet below, the post-hoc Tukey's tests were applied on the significant variables obtained in the previous section. The confidence intervals within the family-wise confidence level graphs that does not include zero indicates a significant different between the corresponding pair of hand controllers.
+In the snippet below, the post-hoc Tukey's tests were applied on the significant variables obtained in the previous section. The confidence intervals within the family-wise confidence level graphs that does not include zero indicates a significant different between the corresponding pair of hand-controllers.
 
 #### Completion Time 
 
@@ -2235,7 +2290,7 @@ df_transformed <-
 
 ```
 
-In this section, the statistical tests of MANOVA (comparing the subjective performance results considering devices as the factor) and MANCOVA (comparing the subjective performance results considering devices as the factor and the demographic variables as the covariates) were performed on the sensor feature results. The significance codes for differences between devices in these tests are provided below each test result. The hand controllers were significantly different in terms of various sensor feature results. Among them, the arm angle sum (`sum.arm.angle`), force RMS (`sos.force`), and travel distance (`travel.distance`) were the significant features for performance.
+In this section, the statistical tests of MANOVA (comparing the subjective performance results considering devices as the factor) and MANCOVA (comparing the subjective performance results considering devices as the factor and the demographic variables as the covariates) were performed on the sensor feature results. The significance codes for differences between devices in these tests are provided below each test result. The hand-controllers were significantly different in terms of various sensor feature results. Among them, the arm angle sum (`sum.arm.angle`), force RMS (`sos.force`), and travel distance (`travel.distance`) were the significant features for performance.
 
 
 ### MANOVA Test Results {.tabset .tabset-fade}
@@ -2301,9 +2356,9 @@ summary.aov(res.manc)
 
 ```
 
-### Post-hoc Tukey's Test for the Pair-wise Differences among the Hand Controllers {.tabset .tabset-fade}
+### Post-hoc Tukey's Test for the Pair-wise Differences among the Hand-controllers {.tabset .tabset-fade}
 
-In the snippet below, the post-hoc Tukey's tests were applied on the significant variables obtained in the previous section. The confidence intervals within the family-wise confidence level graphs that does not include zero indicates a significant different between the corresponding pair of hand controllers.
+In the snippet below, the post-hoc Tukey's tests were applied on the significant variables obtained in the previous section. The confidence intervals within the family-wise confidence level graphs that does not include zero indicates a significant different between the corresponding pair of hand-controllers.
 
 
 #### Travel Distance
@@ -2402,11 +2457,12 @@ plot(tukey.test, sub="for Arm Angle Sum", cex.main=2, cex.lab=1.5, cex.axis=1, c
 
 ## Establishing a Regression Model Between the Subjective and Objective Performance Metrics 
 
-In this section, we tried to establish a relationship between the objective performance metrics derived from the sensor data within the hand controller and the subjective performance measures collected through the survey from users. The goal is to introduce a guideline for finding the influencing factors in the device and managing them to optimize the performance. A Principal Component Analysis (PCA) is needed to identify the highest influencing factors. The positively correlated subjective performance measures and/or the ones showing a significance level ($p-value < 0.05$) of difference between devices were included in the regression model. The measures were selected in a matter that maximizes the significance of the regression model and the Adjusted R-squared value.
+In this section, a relationship between the objective performance metrics derived from the sensor data within the hand-controller and the subjective performance measures collected through the survey from users was established through regression analysis. The goal was to introduce a guideline for defining the influencing device factors and managing them in order to optimize the performance. A PCA identified the highest influencing factors. The performance measures that demonstrated positive correlation or a significance level ($p <$ 0.05) between the devices were included in the regression model. The measures were selected in a matter that maximized the significance of the regression model and the Adjusted $R-squared$ value.
 
 ### Principal Component Analysis 
 
-The first graph is the scree plot that visualizes eigenvalues and shows the percentage of variances explained by each principal component. In the second graph, positive correlated variables point to the same side of the plot and the negative correlated variables point to opposite sides of the graph. In the third graph the devices with a similar profile are grouped together.
+The first graph is the scree plot that visualizes eigenvalues and shows the percentage of variances explained by each principal component. The second figure shows the positive correlated variables point to the same side of the plot and the negative correlated variables point to opposite sides. The longer arrows (colored green) have the largest contribution to the principal component. In the third figure, each point corresponds to the principal component of a user's response on a device. The mean and covariance of responses on each device are plotted as the shaded oval shapes with the respective centers. The segregation between each device shows their differences in the users' opinion.
+
 
 ```{r pca, eval=TRUE, fig.align='center', fig.height=6, fig.width=8, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
 
@@ -2485,7 +2541,8 @@ fviz_pca_ind(
 
 ### Regression Model Establishment
 
-The results of regression model relating the sensor based performance features to the mean values of subjective metrics are provided below. A combination of considerations based on the significance in the \textit{MANCOVA} test as well as positive correlations and larger contributions in PCA lead us to consider a portion of subjective metrics, i.e. `A1`, `A4`, `A5`, `A6`, `A7`, `A8`, `A9`, `A10`, `A13`, `A14`, `A15`, `A16`, `A17`, and `A18` for the regression analysis.. The coefficients estimate the trends while R-squared represents the scatter around the regression line. The $p-value = 0.0002$ shows the significance of model regardless of the value for R-squared models. Low R-squared values are problematic when precise predictions are needed. However, in this case, our final purpose is to identify the trends leading to the optimized performance in the hand controller. The low levels of R-squared are typical in the models related to human performance because people are fairly unpredictable! Please note that even with low R-squared values, the low $p-value$ in this case still indicate a real relationship between the significant predictors and the response variable.
+The regression model that relates the sensor-based performance feature to the mean values of subjective metrics is provided below. Metrics that demonstrated significance in the \textit{MANCOVA} test and large positive correlations and in the PCA were selected for the regression analysis, i.e. `A1`, `A4`, `A5`, `A6`, `A7`, `A8`, `A9`, `A10`, `A13`, `A14`, `A15`, `A16`, `A17`, and `A18` for the regression analysis. The coefficients estimate the trends while $R-squared$ represents the scatter around the regression line. A $p =$ 0.0002 shows the significance of the model regardless of the value for $R-squared$ models. Small $R-squared$ values are problematic when precise predictions are needed. However, in this case, our goal was to identify the trends that optimize performance with the hand-controller. The small values for $R-squared$ are common in models related to human performance because individuals are unpredictable. In spite of small $R-squared$ values, the small $p-value$ indicates a real relationship between the significant predictors and the response variable.
+
 
 ```{r regression, eval=TRUE, fig.align='center', fig.height=12, fig.width=20, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
 
@@ -2551,7 +2608,8 @@ where $Perf_{subj}$ is the average subjective performance measure, $CT$ is compl
 
 ### Model Optimization
 
-After deriving the regression model equation, the next step would be to optimize the equation in order to identify the value of features contributing to achieve the highest performance of the hand controller as follows:
+After deriving the regression model equation, the equation was optimized in order to identify the features that contributed to achieving the highest performance with the hand-controller as follows: 
+
 
 ```{r optimization, eval=TRUE, fig.align='center', fig.height=12, fig.width=20, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
 
@@ -2611,7 +2669,8 @@ optim(c(0.5, 0.5, 0.5, 0.5, 0.5),
 
 ```
 
-The optimization was performed based on a quasi-Newton method (also known as a variable metric algorithm). This method uses function values and gradients to build up a picture of the surface to be optimized. The results suggest the following values on a scale of 0-1 for obtaining the maximum performance of the hand controller:
+
+In order to maximize the equation, the negative of the equation was minimized. The optimization was performed based on a quasi-Newton method (also known as a variable metric algorithm). This method uses function values and gradients to build up a picture of the surface to be optimized. The results suggest the following values on a scale of 0-1 for obtaining the maximum performance of the hand-controller:
 
 \item $CT = 0$
 
@@ -2627,7 +2686,7 @@ The optimization was performed based on a quasi-Newton method (also known as a v
 
 # Surgeon Skill Prediction
 
-In order to apply a prediction algorithm for identifying the surgeon's skill based on the hand controller performance features, the first step would be to learn the patterns in data through exploration and visualization. In this section, a data visualization is provided to determine the correlation between the pairs of features and distribution of data for each class of *Novice* and *Expert* surgeons.    
+In order to apply a prediction algorithm for identifying the surgeon's skill based on the hand-controller performance features, the first step would be to learn the patterns in data through exploration and visualization. In this section, a data visualization is provided to determine the correlation between the pairs of features and distribution of data for each class of *Novice* and *Expert* surgeons.    
 
 ```{r read.data.experience.prediction, eval=TRUE, fig.align='center', fig.height=12, fig.width=20, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
 
@@ -2705,7 +2764,8 @@ boxplot(lr_data[, i],
 
 ```
 
-The figure below is the histogram, correlation plots, and scatter plots of the features. The distribution of each variable is shown on the diagonal. On the bottom of the diagonal the bivariate scatter plots with a fitted line are displayed. In the scatter plots, the <span style="color:red">red</span> colored circles show Expert and the <span style="color:green">greens</span> show Novice surgeons. The linear fits as well as the correlation ellipses are also provided for the scattered data. On the top of the diagonal the value of the correlation plus the significance level as stars. Each significance level is associated to a symbol: $p-values$ (0, 0.001, 0.01, 0.05, 0.1, 1) corresponds to $symbols$ ($"***"$, $"**"$, $"*"$, $"."$, $" "$). 
+The histograms, correlation plots and scatter plots in the figure below illustrate the data distribution in each class and the feature correlation. The distribution of each variable is shown in the diagonal line of boxes through the grid. The boxes below the diagonal line display the bivariate scatter plots.  In the scatter plots, the <span style="color:red">red</span> colored circles show Expert and the <span style="color:green">greens</span> show Novice surgeons. The linear fits and the correlation ellipses are provided for the scattered data. The boxes above the diagnoal line provide the Pearson correlation and the significance level as stars. Each significance level is associated to a symbol: $p-values$ (0, 0.001, 0.01, 0.05, 0.1, 1) corresponds to $symbols$ ($"***"$, $"**"$, $"*"$, $"."$, $" "$). 
+
 
 ```{r features.histogram, eval=TRUE, fig.align='center', fig.height=20, fig.width=20, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
 
@@ -2772,9 +2832,12 @@ pairs.panels(
 
 ```
 
+The distribution of data were normal or a mixture with the median points towards the lower values. This indicated existence of a few participants who had a noticeably different performance in comparison to the rest. All of the features were positively correlated except for wrist angular movements and number of clutches. Each clutch indicates a moment where the user had to revert the hand-controller back into its optimal workspace, which would require time and a distance travelled for the maneuver. These users spent less time in the optimal workspace and had to use more clutches. Therefore used more arm movements and less wrist movements and exerted higher forces. This likely related to forces being more difficult to control once out of the optimal workspace, i.e. approaching singularity, or these users were novices who had not yet finessed their surgical technique and motion. Those users who took longer to complete the task travelled longer distances on the board, used a higher number of clutches and required more force to complete the task. These findings are consistent with the evolution of a surgeon over a training period, where the individual demonstrates a tendency to use smaller movements with less force in the optimal workspace ([Sugiyama et al., 2018](https://jamanetwork.com/journals/jamaophthalmology/fullarticle/2661657) and [Uemura et al., 2014](https://www.sciencedirect.com/science/article/pii/S0022480413021744)). Interestingly, the error count did not correlate significantly with any of the features.
+
 ## Feature Density Plots 
 
-The density plots for various features are provided in the figures below. These plots are the visualizations that help for a better observation in the Expert and Novice separation using each feature. This also helps to understand the overlap in the skill for a specific feature. As shown in the figures, this overlap is evident for almost all of the features, making the prediction not a straightforward process based on only one or two features. There seems to be some differences in the mean values of the *Gimbal Angle Sum* as well as the spread of data along the range for *Force RMS*, *Completion Time*, and *Travel Distance*, with a wider distribution (larger dispersion along the range) for the Novice group. Additionally, the *Number of Clutches* and *Error Count* seem to follow a similar pattern with a semi-bimodal distribution for the Novice group. 
+The density plots for the features are provided in in the figures below. The plots illustrate the level of separation between Experts and Novices with regards to each feature. In each plot there is overlap between the two groups, which highlights the difficulty of making a prediction. There were differences in the mean values of the *Gimbal Angle Sum* as well as the spread of data along the range for Force *RMS*, *Completion Time*, and *Travel Distance*, with a wider distribution (larger dispersion along the range) for the Novice group. Additionally, the *Number of Clutches* and *Error Count* follow a similar pattern with a semi-bimodal distribution for the Novice group. 
+
 
 ```{r feature.dist.plot, eval=TRUE, fig.align='center', fig.height=5, fig.width=9, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
 
@@ -2877,7 +2940,7 @@ where $Skill_{subj}$ is the weight indicator for the skill group, $CT$ is comple
 
 ### Skill Prediction using the Logistic Regression Model
 
-The skill prediction for the testing group of surgeons (9 surgeons) considering their performance features is provided below. The prediction is made based on the regression model previously trained on the training set of surgeons (21 surgeons). The results of **5-fold cross-validation** indicate 78% accuracy, 67% sensitivity, and 83% specificity for the skill prediction using their hand controller performance features (two misclassification over the 9 cases). 
+The skill prediction for the testing group of surgeons (9 surgeons) considering their performance features is provided below. The prediction is made based on the regression model previously trained on the training set of surgeons (21 surgeons). The results of **5-fold cross-validation** indicate 78% accuracy, 67% sensitivity, and 83% specificity for the skill prediction using their hand-controller performance features (two misclassification over the 9 cases). 
 
 ```{r logistic.reg.tes, fig.align='center', fig.height=5, fig.width=9, warning=FALSE, cache=FALSE, out.width="95%"}
 
@@ -2926,7 +2989,7 @@ div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 20px;}
 </style>
 <div class = "blue">
 
-These results indicate that a desired device should have a minimum Completion Time, Travel Distance, Number of Clutches, and Force Magnitude. However, a maximum Gimbal Angle Sum will lead to a higher performance. In addition, the higher coefficients associated with $TD$ and $SOSF$ in the regression equation, i.e. -0.99 and 0.76, respectively, shows the higher contribution of travel distance and force magnitude value to the performance of a hand controller. In addition, an algorithm for surgeon skill prediction is provided that can predict the *Novice* and *Expert* surgeons based on their performance in using the hand controllers with 78% accuracy, 66% sensitivity, and 83% specificity. 
+These results indicate that a desired device should have a minimum Completion Time, Travel Distance, Number of Clutches, and Force Magnitude. However, a maximum Gimbal Angle Sum will lead to a higher performance. In addition, the higher coefficients associated with $TD$ and $SOSF$ in the regression equation, i.e. -0.99 and 0.76, respectively, shows the higher contribution of travel distance and force magnitude value to the performance of a hand-controller. In addition, an algorithm for surgeon skill prediction is provided that can predict the *Novice* and *Expert* surgeons based on their performance in using the hand-controllers with 78% accuracy, 66% sensitivity, and 83% specificity. 
 
 
 </div>
