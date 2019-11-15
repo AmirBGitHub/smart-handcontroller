@@ -840,7 +840,7 @@ ggplot(df_transformed,
   geom_text(x=11, y=2.2, label="*", size = 10) +
   geom_text(x=12, y=1.65, label="*", size = 10) +
   geom_text(x=13, y=1.95, label="*", size = 10) +
-  geom_text(x=17, y=2.05, label="*", size = 10) +
+  geom_text(x=15, y=1.8, label="*", size = 10) +
   geom_text(x=19, y=1.9, label="*", size = 10) +
   geom_text(x=21, y=2.35, label="*", size = 10) +
   geom_text(x=22, y=2.15, label="*", size = 10) +
