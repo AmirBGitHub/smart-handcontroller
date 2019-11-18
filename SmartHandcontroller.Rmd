@@ -2904,7 +2904,7 @@ boxplot(lr_data[, i],
 
 ```
 
-The histograms, correlation plots and scatter plots in the figure below illustrate the data distribution in each class and the feature correlation. The distribution of each variable is shown in the diagonal line of boxes through the grid. The boxes below the diagonal line display the bivariate scatter plots.  In the scatter plots, the <span style="color:red">red</span> colored circles show Expert and the <span style="color:green">greens</span> show Novice surgeons. The linear fits and the correlation ellipses are provided for the scattered data. The boxes above the diagnoal line provide the Pearson correlation and the significance level as stars. Each significance level is associated to a symbol: $p-values$ (0, 0.001, 0.01, 0.05, 0.1, 1) corresponds to $symbols$ ($"***"$, $"**"$, $"*"$, $"."$, $" "$). 
+The histograms, correlation plots and scatter plots in the figure below illustrate the data distribution in each class and the feature correlation. The distribution of each variable is shown in the diagonal line of boxes through the grid. The boxes below the diagonal line display the bivariate scatter plots.  In the scatter plots, the <span style="color:red">red</span> colored circles show Novice and the <span style="color:green">greens</span> show Expert surgeons. The linear fits and the correlation ellipses are provided for the scattered data. The boxes above the diagnoal line provide the Pearson correlation and the significance level as stars. Each significance level is associated to a symbol: $p-values$ (0, 0.001, 0.01, 0.05, 0.1, 1) corresponds to $symbols$ ($"***"$, $"**"$, $"*"$, $"."$, $" "$). 
 
 
 ```{r features.histogram, eval=TRUE, fig.align='center', fig.height=20, fig.width=20, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
@@ -2951,7 +2951,7 @@ The histograms, correlation plots and scatter plots in the figure below illustra
 # p-values(0, 0.001, 0.01, 0.05, 0.1, 1) <=> symbols(“***”, “**”, “*”, “.”, " “)
 pairs.panels(
   lr_data[, -7],
-  bg = c("firebrick1", "lightgreen")[lr_data$`Experience Level`],
+  bg = c("lightgreen", "firebrick1")[lr_data$`Experience Level`],
   hist.col = "lightgoldenrod1",
   cor = TRUE,
   method = "pearson",
@@ -2971,11 +2971,11 @@ pairs.panels(
 
 ```
 
-The distribution of data were normal or a mixture with the median points towards the lower values. This indicated existence of a few participants who had a noticeably different performance in comparison to the rest. All of the features were positively correlated except for wrist angular movements and number of clutches. Each clutch indicates a moment where the user had to revert the hand-controller back into its optimal workspace, which would require time and a distance travelled for the maneuver. These users spent less time in the optimal workspace and had to use more clutches. Therefore used more arm movements and less wrist movements and exerted higher forces. This likely related to forces being more difficult to control once out of the optimal workspace, i.e. approaching singularity, or these users were novices who had not yet finessed their surgical technique and motion. Those users who took longer to complete the task travelled longer distances on the board, used a higher number of clutches and required more force to complete the task. These findings are consistent with the evolution of a surgeon over a training period, where the individual demonstrates a tendency to use smaller movements with less force in the optimal workspace ([Sugiyama et al., 2018](https://jamanetwork.com/journals/jamaophthalmology/fullarticle/2661657) and [Uemura et al., 2014](https://www.sciencedirect.com/science/article/pii/S0022480413021744)). Interestingly, the error count did not correlate significantly with any of the features.
+The distribution of data were normal or a mixture with the median points towards the lower values. This indicated existence of a few participants who had a noticeably different performance in comparison to the rest. All of the features were positively correlated except for wrist angular movements with force and completion time. Each clutch indicates a moment where the user had to revert the hand-controller back into its optimal workspace, which would require time and a distance travelled for the maneuver. These users spent less time in the optimal workspace and had to use more clutches. Therefore used more arm movements and less wrist movements and exerted higher forces with more peg drop errors. This likely related to forces being more difficult to control once out of the optimal workspace, i.e. approaching singularity, or these users were novices who had not yet finessed their surgical technique and motion. Those users who took longer to complete the task travelled longer distances on the board, used a higher number of clutches and required more force to complete the task. These findings are consistent with the evolution of a surgeon over a training period, where the individual demonstrates a tendency to use smaller movements with less force in the optimal workspace ([Sugiyama et al., 2018](https://jamanetwork.com/journals/jamaophthalmology/fullarticle/2661657) and [Uemura et al., 2014](https://www.sciencedirect.com/science/article/pii/S0022480413021744)). 
 
 ## Feature Density Plots 
 
-The density plots for the features are provided in in the figures below. The plots illustrate the level of separation between Experts and Novices with regards to each feature. In each plot there is overlap between the two groups, which highlights the difficulty of making a prediction. There were differences in the mean values of the *Gimbal Angle Sum* as well as the spread of data along the range for Force *RMS*, *Completion Time*, and *Travel Distance*, with a wider distribution (larger dispersion along the range) for the Novice group. Additionally, the *Number of Clutches* and *Error Count* follow a similar pattern with a semi-bimodal distribution for the Novice group. 
+The density plots for the features are provided in in the figures below. The plots illustrate the level of separation between Experts and Novices with regards to each feature. In each plot there is overlap between the two groups, which highlights the difficulty of making a prediction. There were differences in the mean values of the *Gimbal Angle Sum* and *Force RMS* as well as the spread of data along the range for *Number of Clutches*, *Travel Distance*, and *Error Count* with a wider distribution (larger dispersion along the range) for the Novice group in *Travel Distance*. Additionally, the *Completion Time* follow a similar pattern with a semi-bimodal distribution for the Expert group. 
 
 
 ```{r feature.dist.plot, eval=TRUE, fig.align='center', fig.height=5, fig.width=9, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
@@ -2989,12 +2989,12 @@ featurePlot(
     y = list(relation = "free")
   ),
   par.settings = list(
-    superpose.line = list(col = c("firebrick1", "lightgreen")),
+    superpose.line = list(col = c("lightgreen", "firebrick1")),
     strip.background = list(col = "lightgoldenrod1")
   ),
   adjust = 1.5,
   pch = "|",
-  col = c("firebrick1", "lightgreen"),
+  col = c("lightgreen", "firebrick1"),
   main = "Density Plots of the Surgeon Skill Features",
   auto.key = list(columns = 3)
 )
