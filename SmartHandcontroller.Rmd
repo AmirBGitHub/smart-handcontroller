@@ -999,7 +999,7 @@ legend(
   legend = c(
     "Excalibur: 25 Subjects",
     "Premium: 2 Subjects",
-    "Sigma7: 3 Subject"
+    "Sigma7: 3 Subjects"
   ),
   bty = "n",
   pch = 20 ,
@@ -2605,7 +2605,7 @@ summary.aov(res.manc)
 
 ## Establishing a Regression Model Between the Subjective and Objective Performance Metrics 
 
-In this section, a relationship between the objective performance metrics derived from the sensor data within the hand-controller and the subjective performance measures collected through the survey from users was established through regression analysis. The goal was to introduce a guideline for defining the influencing device factors and managing them in order to optimize the performance. A PCA identified the highest influencing factors. The performance measures that demonstrated positive correlation or a significance level ($p <$ 0.05) between the devices were included in the regression model. The measures were selected in a matter that maximized the significance of the regression model and the Adjusted $R-squared$ value.
+In this section, a relationship between the objective performance metrics derived from the sensor data within the hand-controllers and the subjective performance measures collected through the survey from users was established through regression analysis. The goal was to introduce a guideline for defining the influencing device factors and managing them in order to optimize the performance. A PCA identified the highest influencing factors. The performance measures that demonstrated positive correlation or a significance level ($p <$ 0.05) between the devices were included in the regression model. Composition of 3 devices for subjective and objective measures were considered. They were selected in a way that maximized the significance of the regression model and the Adjusted $R-squared$ value.
 
 ### Principal Component Analysis 
 
@@ -2826,7 +2826,7 @@ In order to maximize the equation, the negative of the equation was minimized. T
 
 # Surgeon Skill Prediction
 
-In order to apply a prediction algorithm for identifying the surgeon's skill based on the hand-controller performance features, the first step would be to learn the patterns in data through exploration and visualization. In this section, a data visualization is provided to determine the correlation between the pairs of features and distribution of data for each class of *Novice* and *Expert* surgeons.    
+In order to apply a prediction algorithm for identifying the surgeon's skill based on the hand-controller performance features, the first step would be to learn the patterns in data through exploration and visualization. In this section, a data visualization is provided to determine the correlation between the pairs of features and distribution of data for each class of *Novice* and *Expert* surgeons. The average of 3 devices were considered in these analyses.  
 
 ```{r read.data.experience.prediction, eval=TRUE, fig.align='center', fig.height=12, fig.width=20, warning=FALSE, cache=TRUE, include=TRUE, out.width="95%"}
 
@@ -3005,7 +3005,7 @@ featurePlot(
 
 In this section, a binomial Logistic Regression model is developed after partitioning the data into training and testing sets (70% training and 30% testing). The summary of model is provided as follows where returns the estimate, standard errors, $z-score$, and $p-values$ on each of the coefficients. Although the factors seem to be not significant according to $0.05$ threshold, the model is can be used as this insignificancy is mostly due to the small available sample size and the subjective differences among the individuals in each group of skill.   
 
-```{r logistic.reg.model, fig.align='center', fig.height=5, fig.width=9, warning=FALSE, cache=FALSE, out.width="95%"}
+```{r logistic.reg.model, eval=TRUE, fig.align='center', fig.height=5, fig.width=9, warning=FALSE, cache=TRUE, out.width="95%"}
 
 col_names <- c("completion.time", "error.count", "travel.distance", "number.clutches", "rms.force", "sum.gimbal.angle", "experience.level")
 colnames(lr_data) <- col_names
