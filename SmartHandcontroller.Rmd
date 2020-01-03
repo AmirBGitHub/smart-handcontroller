@@ -1,11 +1,6 @@
 ---
 title: "Smart Hand-controller Data Analysis"
-author:  
-  - Amir Baghdadi^[Project neuroArm, Department of Clinical Neurosciences, University of Calgary. ]
-  - Hamidreza Hoshyarmanesh^[Project neuroArm, Department of Clinical Neurosciences, University of Calgary. ]
-  - Madeleine de Lotbinière-Bassett^[Project neuroArm, Department of Clinical Neurosciences, University of Calgary. ]
-  - Sanju Lama^[Project neuroArm, Department of Clinical Neurosciences, University of Calgary. ]
-  - Garnette R. Sutherland^[Project neuroArm, Department of Clinical Neurosciences, University of Calgary. Corresponding author. [garnette@ucalgary.ca](mailto:garnette@ucalgary.ca).]
+author: Authors blinded for peer-review.
 
 date: "`r format(Sys.time(), '%B %d, %Y')`"
 output:
