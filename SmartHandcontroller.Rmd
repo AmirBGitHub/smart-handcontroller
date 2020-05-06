@@ -31,7 +31,7 @@ The reader can **show** any code chunk by clicking on the *code* button. We chos
 
 The snippet below documents the list of **R** libraries that were used in this research. For convenience, we used the pacman package since it allows for installing/loading the needed libraries in one step.
 
-```{r error=FALSE, warning=FALSE, cache=TRUE, include=FALSE, load_libraries, message=FALSE}
+```{r load_libraries, error=FALSE, message=FALSE, warning=FALSE, cache=FALSE, include=TRUE}
 rm(list = ls()) # clear global environment
 graphics.off() # close all graphics
 library(pacman) # needs to be installed first
@@ -62,7 +62,7 @@ p_load(
 
 In the snippet below, we extract the ".mat" files from the hand-controllers MATLAB software.
 
-```{r load_data, eval=FALSE, cache=TRUE, include=FALSE}
+```{r load_data, eval=FALSE, cache=TRUE, include=TRUE}
 
 subj_data_survery_trans <-
   read_excel(
